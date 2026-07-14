@@ -1,48 +1,142 @@
-# Trabajo Práctico: Optimización de Flota Logística Urbana
+# Trabajo Práctico: Planificación de Entregas Urbanas
 
 ## Situación Hipotética
 
-Ustedes han sido contratados como consultores juniors de software para "Logística Inteligente S.A." (LISASA), una empresa en pleno crecimiento que se especializa en la distribución de paquetería y mercadería en grandes centros urbanos. LISASA opera con un modelo de múltiples depósitos distribuidos estratégicamente y posee una flota diversa de transportes, que incluye desde motocicletas para entregas rápidas y livianas, hasta furgonetas y camiones para cargas más voluminosas y pesadas.
+**Logística Inteligente S.A. (LISASA)** distribuye paquetería desde un depósito urbano con motocicletas, furgonetas y camiones. Hoy arma viajes en planillas: algunas cargas exceden peso o volumen, las nuevas paradas vuelven incumplibles ventanas ya comprometidas y los incidentes no quedan vinculados con la entrega afectada.
 
-El sistema actual de LISASA es rudimentario, basado en hojas de cálculo y comunicación manual, lo que provoca ineficiencias significativas: rutas subóptimas, transportes que exceden sus capacidades, incumplimiento de ventanas horarias de entrega y una gestión deficiente de las incidencias. La empresa está perdiendo dinero y reputación debido a estos problemas operativos.
+La empresa solicita un prototipo para construir y ejecutar viajes factibles sobre una matriz de distancias conocida. El sistema valida una secuencia propuesta y calcula sus resultados; no busca la ruta óptima ni asigna solicitudes automáticamente.
+
+### Objetivo del sistema
+
+El prototipo deberá permitir:
+
+- registrar ubicaciones, solicitudes y transportes;
+- agregar solicitudes a una secuencia de viaje y revalidar toda la ruta;
+- controlar peso, volumen y ventanas horarias;
+- calcular horarios, distancia, costo e impacto ambiental estimado;
+- iniciar un viaje y registrar entregas o intentos fallidos;
+- emitir comprobantes y conservar incidentes trazables.
+
+### Modelo operativo simplificado
+
+Cada viaje ocurre en una fecha, sale de un único depósito y regresa a él. Se proporciona una matriz dirigida de distancias en kilómetros entre todas las ubicaciones utilizadas. La velocidad media es constante por tipo de transporte y cada parada insume `10 minutos` de servicio. El tiempo de recorrido de un tramo es `distancia / velocidad`; no se modelan tránsito, descanso ni carga inicial.
+
+### Alcance y vocabulario del dominio
+
+| Concepto | Representa | Es responsable de | No es responsable de |
+| --- | --- | --- | --- |
+| Transporte | Un vehículo disponible | Identidad, capacidades, velocidad, costos y factor ambiental | Elegir solicitudes automáticamente |
+| Solicitud | Una entrega indivisible | Artículos, destino y ventana horaria | Definir su posición en el viaje |
+| Artículo | Una unidad de carga | Peso y volumen | Conocer el transporte asignado |
+| Ubicación | Un punto de la matriz | Identidad y descripción | Calcular rutas por sí sola |
+| Viaje | Una secuencia planificada para una fecha | Transporte, depósito, solicitudes, horarios y estado | Optimizar el orden de las paradas |
+| Parada | La visita a una solicitud | Orden, llegada prevista y resultado | Reutilizarse en otro viaje |
+| Comprobante | La evidencia de una entrega | Solicitud, fecha real y receptor | Existir para un intento fallido |
+| Incidente | Un problema durante el viaje | Tipo, fecha, descripción y entidad afectada | Cambiar por sí solo la planificación |
+
+```mermaid
+flowchart LR
+    D[Depósito] -->|inicio y fin de| V[Viaje]
+    T[Transporte] -->|realiza| V
+    V -->|ordena| P[Paradas]
+    P -->|atiende| S[Solicitudes]
+    S -->|contiene| A[Artículos]
+    S -->|tiene destino| U[Ubicación]
+    P -->|puede generar| C[Comprobante]
+    P -->|puede registrar| I[Incidente]
+```
+
+El mapa no prescribe clases ni una estructura de colecciones.
+
+### Cálculo de un itinerario
+
+La llegada a la primera parada se obtiene desde la hora de salida. Si se llega antes del inicio de su ventana, el transporte espera y comienza el servicio al inicio. Si se llega luego del fin, la secuencia es inviable. Las paradas siguientes parten de la finalización del servicio anterior. La vuelta al depósito suma distancia y tiempo, pero no está sujeta a una ventana.
+
+```mermaid
+flowchart TD
+    A[Agregar solicitud a la secuencia] --> B[Recalcular peso y volumen]
+    B --> C{Respeta ambas capacidades?}
+    C -->|No| X[Rechazar sin cambios]
+    C -->|Sí| D[Recorrer desde el depósito]
+    D --> E[Calcular llegada, espera y servicio]
+    E --> F{Todas las ventanas se cumplen?}
+    F -->|No| X
+    F -->|Sí| G[Conservar nueva secuencia]
+    G --> H[Calcular regreso, costo e impacto]
+```
+
+### Ejemplo de aceptación
+
+Una furgoneta admite `500 kg` y `8 m³`, viaja a `30 km/h`, cuesta `$2` por kilómetro y `$5` por parada. Sale a las `09:00`. La solicitud `S1` pesa `100 kg`, ocupa `2 m³`, está a `15 km` del depósito y tiene ventana `09:20–10:00`. `S2` pesa `150 kg`, ocupa `3 m³`, está a `10 km` de `S1`, tiene ventana `10:00–11:00`, y su destino queda a `20 km` del depósito.
+
+La llegada a `S1` es `09:30`; termina a `09:40`. La llegada a `S2` es `10:00`; termina a `10:10`. La carga total es `250 kg` y `5 m³`, y la distancia completa es `15 + 10 + 20 = 45 km`. El costo es `45 * 2 + 2 * 5 = $100`. La secuencia es factible. Si la ventana de `S2` terminara a `09:55`, agregarla se rechazaría y el viaje conservaría únicamente `S1`.
+
+### Fuera de alcance
+
+No se requiere interfaz gráfica, persistencia, GPS, tránsito real, geocodificación, múltiples depósitos por viaje, recolecciones, división de solicitudes, optimización de rutas, asignación automática de flota, combustible ni facturación.
 
 ## Requerimientos Técnicos Obligatorios
 
-Su tarea es diseñar e implementar un sistema inicial que permita a LISASA gestionar de manera más eficiente sus operaciones diarias de entrega. Este sistema debe ser capaz de:
-
--   Mantener un registro de los distintos tipos de transporte que LISASA utiliza, considerando sus capacidades de carga (peso y volumen) y sus características operativas.
--   Administrar las solicitudes de entrega, las cuales incluyen los artículos a enviar (con su peso y volumen específicos), la ubicación de destino del cliente y, un aspecto crucial, una franja horaria estricta para la entrega.
--   Organizar viajes de entrega que asignen las solicitudes a los transportes adecuados, agrupándolas en secuencias lógicas que partan de un almacén, visiten múltiples puntos y regresen.
--   Asegurar que cada transporte no exceda sus límites de peso y volumen al momento de cargar las solicitudes asignadas para un viaje.
--   Garantizar que las entregas planificadas se realicen dentro de las franjas horarias acordadas con los clientes.
--   Generar comprobantes de recepción una vez que una solicitud ha sido entregada exitosamente.
--   Registrar cualquier problema o eventualidad que surja durante el proceso de entrega (por ejemplo, retrasos inesperados, paquetes dañados, clientes ausentes en el momento de la entrega).
-
-El diseño debe ser robusto y, a la vez, suficientemente flexible para permitir futuras extensiones, como la optimización dinámica de rutas, la integración con sistemas de rastreo GPS en tiempo real o la adición de nuevos tipos de transportes y servicios. Piensen en un modelo que pueda evolucionar junto con las necesidades de LISASA.
-
-La solución que propongan debe estructurarse utilizando el paradigma de Programación Orientada a Objetos. Esto implica que deberán modelar los distintos elementos que componen el sistema de LISASA como unidades distintas, cada una con sus propias características y los comportamientos que pueden realizar.
-
-Cuando existan categorías de elementos similares pero con particularidades, como los diferentes tipos de transporte (motocicletas, furgonetas, camiones), se espera que el diseño refleje esta relación general-específica para promover la reutilización de conceptos y la claridad del modelo. Para acciones comunes que pueden manifestarse de distintas maneras según el tipo de elemento involucrado (por ejemplo, la manera en que diferentes transportes calculan su impacto ambiental o su costo operativo), el sistema debe ser capaz de manejar estas variaciones de forma unificada.
-
-El sistema debe ser capaz de reaccionar ante situaciones inesperadas o datos incorrectos mediante mecanismos que permitan gestionar errores de manera controlada y específica. Por ejemplo, al intentar cargar un transporte más allá de su capacidad, o al recibir una solicitud con una ventana horaria imposible de cumplir, el sistema debe señalar la falla claramente.
-
-Además, la solución debe ser diseñada pensando en su verificabilidad. Esto significa que la estructura que propongan debe facilitar la creación de pruebas automatizadas para asegurar que las lógicas de negocio más importantes funcionen según lo esperado y que el sistema se comporte correctamente bajo diversas condiciones.
+- Implementar la solución con Programación Orientada a Objetos y separar el punto de entrada de la lógica del dominio.
+- Identificar y justificar una jerarquía de herencia que represente una especialización válida entre conceptos relacionados y una variación polimórfica real, por ejemplo el cálculo ambiental de transportes diferentes.
+- Encapsular secuencia, carga y estados; no se podrán agregar paradas ni completar entregas modificando atributos directamente.
+- Implementar el recorrido secuencial y sus acumulaciones con estructuras nativas, sin librerías de ruteo u optimización.
+- Definir excepciones propias para datos inválidos, capacidad excedida, ruta incompleta, ventana incumplida y transición ilegal.
+- Utilizar `date`, `time`, `datetime` y `timedelta` de la biblioteca estándar con una convención numérica consistente.
+- Escribir pruebas unitarias con `pytest` para cálculos, límites, atomicidad, estados y trazabilidad.
 
 ## Reglas de Negocio
 
-1.  LISASA requiere que todo medio de transporte que opere tenga claramente definidas sus capacidades máximas de carga, tanto en peso (en kilogramos) como en volumen (en metros cúbicos). Estos valores son fundamentales y deben ser siempre estrictamente positivos al ser registrados.
-2.  La empresa dispone de diversos tipos de transporte, como motocicletas, furgonetas y camiones. Cada tipo posee características predeterminadas en cuanto a su capacidad y un costo operativo base por distancia recorrida. Por ejemplo, una motocicleta, por su naturaleza, no podría cargar más de 100 kg o 0.5 m³. El sistema debe ser capaz de distinguir y gestionar estas especializaciones.
-3.  Cada solicitud de entrega debe detallar los artículos a despachar (donde cada artículo tiene un peso y un volumen individual), la ubicación final para el cliente y, críticamente, una franja horaria de entrega precisa, definida por una hora de inicio y una hora de fin (ej. "10:00", "12:00"). El sistema debe ser capaz de determinar automáticamente el peso y volumen total de una solicitud a partir de sus artículos.
-4.  Al registrar nuevos elementos en el sistema (sean transportes, solicitudes de entrega, datos de clientes o almacenes), es esencial validar que la información inicial sea coherente y completa. Si se intentan ingresar datos inconsistentes (ej. identificadores vacíos, capacidades negativas, o ventanas horarias ilógicas), el sistema debe señalar el error de manera específica.
-5.  Al momento de agregar una solicitud a un viaje de entrega planificado, el sistema debe verificar meticulosamente que el peso y volumen acumulado de todas las solicitudes ya planificadas para ese viaje, junto con la nueva adición, no excedan los límites máximos del transporte asignado para dicho viaje. Si una solicitud no puede ser incorporada a un viaje porque su carga superaría la capacidad del transporte, el sistema debe registrar esta situación de forma explícita y detener la operación, informando el motivo.
-6.  Una solicitud se considera apta para ser entregada por un transporte en un viaje solo si la hora prevista de llegada al destino del cliente (considerando el itinerario y la secuencia de paradas ya definidas en el viaje) se ajusta perfectamente a la franja horaria establecida para esa entrega. Para simplificar esta lógica, pueden asumir un tiempo de viaje fijo entre paradas o utilizar una matriz de distancias predefinida entre ubicaciones clave. Si al intentar asignar una solicitud a un viaje, se detecta que no es posible cumplir con su ventana horaria, el sistema debe indicar esta inviabilidad de forma clara.
-7.  El sistema debe poder estimar el costo total de cada viaje. Este se calculará en función de la distancia total del recorrido (simplificada por un cálculo por número de paradas o utilizando distancias fijas entre ubicaciones) multiplicada por el costo base operativo del tipo de transporte, y sumando un costo fijo por cada parada realizada en el viaje.
-8.  Una vez que una solicitud ha sido confirmada como entregada durante un viaje, el sistema debe generar un documento de respaldo que contenga una referencia a la solicitud entregada, la fecha y hora real de la entrega, y un identificador del receptor (puede ser un simple texto en esta etapa).
-9.  Si durante la ejecución de un viaje surge algún problema (ej. un retraso por tráfico, un paquete se daña, el cliente no está presente en la dirección), el sistema debe permitir registrar estas eventualidades. Cada problema registrado debe asociarse a la solicitud específica y/o al transporte involucrado, incluyendo una descripción detallada y un tipo de problema (ej. 'DAÑO', 'AUSENTE', 'RETRASO').
-10. Finalmente, LISASA se preocupa por el medio ambiente. Por ello, el sistema debe ser capaz de evaluar el impacto ambiental de cada tipo de transporte, aunque sea de forma simplificada. Esta evaluación variará según el tipo de vehículo (motocicleta, furgoneta, camión), demostrando que el sistema puede manejar acciones similares de manera diferente según el elemento que las realice.
+1. **Identidad y magnitudes:** Los identificadores de transportes, solicitudes, ubicaciones y viajes son únicos dentro de su categoría y no vacíos. Peso, volumen, velocidad, costo por kilómetro y factor ambiental son positivos; el costo por parada es no negativo.
+2. **Solicitudes válidas:** Una solicitud contiene al menos un artículo, un destino distinto del depósito y una ventana con inicio anterior o igual al fin. Su peso y volumen son las sumas de sus artículos y no pueden modificarse luego de incorporarla a un viaje.
+3. **Matriz completa:** Cada tramo utilizado debe tener una distancia no negativa definida en el sentido recorrido. La distancia entre una ubicación y sí misma es cero. Si falta un tramo, el cálculo se rechaza sin modificar el viaje.
+4. **Carga indivisible:** La suma de peso y la suma de volumen de todas las solicitudes no pueden superar las capacidades inclusivas del transporte. Deben cumplirse ambos límites; una solicitud no se divide entre viajes.
+5. **Solicitud única:** Una solicitud puede pertenecer como máximo a un viaje `PLANIFICADO` o `EN_CURSO`. Dentro de un viaje aparece una sola vez. Una solicitud entregada no puede volver a planificarse.
+6. **Horario secuencial:** Cada tramo demora `distancia / velocidad`. Al llegar antes de una ventana se espera; llegar exactamente al fin es válido. Cada servicio dura `10 minutos` y la siguiente salida ocurre al finalizarlo.
+7. **Revalidación atómica:** Al agregar, quitar o reordenar una solicitud en un viaje planificado, se recalculan desde el depósito la carga y todas las ventanas. Si cualquier regla falla, la secuencia, horarios y resultados anteriores permanecen intactos.
+8. **Distancia y costo:** La distancia total incluye salida, tramos entre paradas y regreso al depósito. El costo es `distancia_total * costo_por_km + cantidad_de_paradas * costo_por_parada`; las esperas no agregan costo en este prototipo.
+9. **Impacto ambiental:** Cada transporte calcula su estimación mediante un comportamiento propio que, como mínimo, depende de la distancia total y su factor ambiental. La unidad elegida debe declararse y el cálculo no cambia el viaje.
+10. **Estados del viaje:** Un viaje nace `PLANIFICADO`, puede pasar a `EN_CURSO` y luego a `FINALIZADO`. Solo se inicia si tiene al menos una parada y su itinerario sigue siendo factible. La secuencia no puede modificarse después de iniciar.
+11. **Resultado de una parada:** En un viaje en curso, cada parada pendiente termina una sola vez como `ENTREGADA` o `FALLIDA`, respetando el orden planificado. Una entrega genera exactamente un comprobante con solicitud, fecha y hora reales, y receptor no vacío; una fallida exige al menos un incidente y no genera comprobante.
+12. **Incidentes y finalización:** Un incidente tiene tipo `DAÑO`, `AUSENTE` o `RETRASO`, descripción no vacía, instante y referencia a una solicitud o al transporte del viaje. El viaje solo finaliza cuando todas sus paradas tienen resultado; las consultas de costo, impacto e incidentes no alteran estados.
+
+### Pruebas mínimas esperadas
+
+- identificadores duplicados, magnitudes inválidas y ventanas límite;
+- exceso solo de peso, solo de volumen y valores exactamente en capacidad;
+- tramo faltante y matriz dirigida;
+- llegada antes del inicio, exactamente al fin y un minuto tarde;
+- agregado o reordenamiento inviable sin cambios parciales;
+- distancia de ida, tramos y regreso; costo con varias paradas;
+- doble asignación de una solicitud;
+- inicio vacío y modificación luego de iniciar;
+- orden de resultados, comprobante único e intento fallido;
+- consultas sin efectos secundarios.
+
+### Decisiones de diseño que deberán resolver
+
+- ¿Qué objeto recorre la secuencia y conserva juntos horarios y distancias coherentes?
+- ¿Cómo se representa una propuesta de cambio para validarla antes de reemplazar el itinerario?
+- ¿Los totales de carga se almacenan o se calculan? ¿Cómo se evita su desactualización?
+- ¿Cómo varía el impacto ambiental sin preguntar explícitamente el tipo de transporte?
+- ¿Dónde se controlan el orden y los estados de las paradas?
+- ¿Cómo se distingue un cálculo consultivo de una transición operativa?
+
+No existe un diagrama de clases oficial. Se evaluarán invariantes, responsabilidades, bajo acoplamiento y pruebas que expliquen el ejemplo.
+
+### Evolución durante el semestre
+
+1. **Catálogo logístico:** transportes, ubicaciones, solicitudes, artículos y validaciones locales.
+2. **Itinerario:** matriz, recorrido temporal, ventanas, capacidad y cambios atómicos.
+3. **Operación:** estados, entregas, fallos, comprobantes e incidentes.
+4. **Variación de comportamiento:** al menos dos tipos de transporte con cálculos ambientales diferentes y tratamiento uniforme.
+5. **Cambio controlado:** la cátedra elegirá una extensión —por ejemplo tiempos de servicio variables, recolecciones o cancelación en curso— para evaluar la adaptabilidad.
+
+Cada incremento deberá conservar las pruebas anteriores y actualizar brevemente el diagrama y las decisiones afectadas.
 
 ## Notas
-- Se prohíbe el uso de la librería pandas; el objetivo es evaluar el manejo de estructuras nativas (listas, diccionarios) y la lógica de algoritmos manuales.
-- Es requisito obligatorio presentar un diagrama de flujo previo a la codificación para organizar la arquitectura lógica y prevenir fallos de diseño.
-- Cada implementación debe estar debidamente sustentada; el alumno debe ser capaz de explicar y justificar técnicamente las decisiones tomadas en el código.
-- Se recomienda el uso de la librería estándar de Python (como datetime o math) para optimizar tareas específicas y evitar la redacción innecesaria de funciones ya existentes.
+
+- Se prohíbe `pandas` y cualquier librería de optimización o ruteo; se evaluarán recorridos y acumulaciones implementados por ustedes.
+- Antes de codificar, presenten un diagrama de responsabilidades y relaciones. Los mapas del enunciado no prescriben clases.
+- Cada implementación deberá estar sustentada y las reglas críticas demostradas mediante pruebas automatizadas.
+- Se permite la biblioteca estándar de Python; las distancias y ubicaciones son datos locales, no servicios externos.
