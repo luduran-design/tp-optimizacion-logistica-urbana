@@ -68,6 +68,20 @@ class Transporte():
 
     def calcular_costo(self, kilometros, cantidad_paradas):
         pass
+    
+class Motocicleta(Transporte):
+    def calcular_impacto(self, kilometros):
+        pass
+
+
+class Furgoneta(Transporte):
+    def calcular_impacto(self, kilometros):
+        pass
+
+
+class Camion(Transporte):
+    def calcular_impacto(self, kilometros):
+        pass
 
 class Parada:
     def __init__(self, orden, solicitud, llegada_prevista, resultado):
