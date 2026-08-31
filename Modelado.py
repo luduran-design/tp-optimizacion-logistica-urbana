@@ -271,14 +271,14 @@ class PoliticaDeOrdenamiento(ABC):
     def sugerir_orden(self, deposito, solicitudes, matriz):
         pass
     
-    class VecinoMasCercano(PoliticaDeOrdenamiento):
+class VecinoMasCercano(PoliticaDeOrdenamiento):
         # VecinoMasCercano: ordena empezando por la solicitud mas cercana al deposito y 
         # siguiendo por la mas cercana a la anterior. Criterio distinto a MenorVentanaPrimero
         # (regla 13 pide 2 politicas que ordenen distinto).
         def sugerir_orden(self, deposito, solicitudes, matriz):
             pass
 
-    class MenorVentanaPrimero(PoliticaDeOrdenamiento):
+class MenorVentanaPrimero(PoliticaDeOrdenamiento):
         # MenorVentanaPrimero: ordena por la ventana horaria que cierra antes 
         # (las mas urgentes primero). Es la segunda politica intercambiable exigida por la 
         # regla 13.
