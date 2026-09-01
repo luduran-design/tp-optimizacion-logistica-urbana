@@ -187,3 +187,27 @@ Las tres comparten la base lineal exigida por la regla 9, pero cada una le
 agrega (o no) un término distinto según la variable física relevante para ese
 tipo de vehículo — es lo que hace que la jerarquía se sostenga como
 especialización real, y no como tres clases con el mismo comportamiento.
+
+## Criterio de variación entre políticas de ordenamiento
+
+`PoliticaDeOrdenamiento` es una clase abstracta (`ABC`) que define el contrato
+`sugerir_orden(deposito, solicitudes, matriz)`. Cualquier política concreta lo
+implementa a su manera, y por eso son intercambiables sin tocar el núcleo
+(regla 13). Se modelan dos, eligiendo qué criterio prioriza cada una al armar
+la sugerencia de recorrido:
+
+- **VecinoMasCercano** — prioriza distancia. Empieza por la solicitud más
+  cercana al depósito y sigue eligiendo, en cada paso, la más cercana a la
+  última visitada. Intenta minimizar kilómetros recorridos ignorando las ventanas 
+  horarias.
+- **MenorVentanaPrimero** — prioriza urgencia. Ordena las solicitudes por el
+  fin de su ventana horaria, atendiendo primero las que cierran antes.
+  Ignora la distancia, pero reduce el riesgo de perder una ventana por
+  atender antes una entrega menos apremiante.
+
+Las dos cumplen el mismo contrato (mismo método, misma firma, mismo tipo de
+salida) pero priorizan variables opuestas: una minimiza distancia sin mirar
+tiempo, la otra respeta tiempo sin mirar distancia. Es lo que hace que sean
+comparables entre sí y que la abstracción `PoliticaDeOrdenamiento` tenga
+sentido — dos implementaciones que producen resultados distintos sobre la
+misma lista de solicitudes, sin modificar ningún viaje.
