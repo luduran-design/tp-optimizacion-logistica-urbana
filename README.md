@@ -162,3 +162,28 @@ Cada incremento deberá conservar las pruebas anteriores y actualizar brevemente
 - Antes de codificar, presenten un diagrama de responsabilidades y relaciones. Los mapas del enunciado no prescriben clases.
 - Cada implementación deberá estar sustentada y las reglas críticas demostradas mediante pruebas automatizadas.
 - Se permite la biblioteca estándar de Python; las distancias y ubicaciones son datos locales, no servicios externos.
+
+## Criterio de variación del impacto ambiental
+
+Cada subtipo de `Transporte` implementa `calcular_impacto(km)` con una fórmula
+distinta, eligiendo qué variable adicional (además de la distancia y el factor
+ambiental base, mínimo exigido por la consigna) le corresponde a ese tipo de
+vehículo en la realidad:
+
+- **Furgoneta** — fórmula lineal pura: `km * factor_ambiental`. Es el caso
+  base y el que usa el ejemplo de aceptación del enunciado
+  (`45 km * 0.27 = 12.15 kg CO2`), así que sirve como ancla para validar el
+  resto.
+
+- **Motocicleta** — PISO_ARRANQUE_FRIO + (km * factor_ambiental). 
+Un motor recién arrancado todavía no llegó a su temperatura de trabajo ideal, así que consume (y contamina) más en los primeros metros que una vez que ya está en marcha normal. En un recorrido largo ese arranque es un detalle insignificante, pero las motos hacen exactamente lo contrario: entregas urbanas de última milla, con trayectos cortos y paradas constantes. Ahí el "costo del arranque" se repite todo el tiempo y pesa mucho en relación al resto del viaje, porque el viaje en sí es corto. Por eso la fórmula no puede ser puramente lineal: se le agrega un valor fijo (PISO_ARRANQUE_FRIO) que está presente siempre, sin importar la distancia, y que representa ese costo de arranque. En un trayecto corto, ese piso fijo puede ser la mitad o más del impacto total; en un trayecto largo, se vuelve casi despreciable frente al término lineal. Es justamente el comportamiento real de un motor, y una fórmula lineal pura nunca lo hubiera podido representar.
+
+- **Camión** — se multiplica por un factor que crece según qué porcentaje de
+  su capacidad está transportando (`km * factor_ambiental * (1 + carga_actual
+  / capacidad_peso)`). Un camión cargado consume y contamina más que uno
+  vacío recorriendo la misma distancia.
+
+Las tres comparten la base lineal exigida por la regla 9, pero cada una le
+agrega (o no) un término distinto según la variable física relevante para ese
+tipo de vehículo — es lo que hace que la jerarquía se sostenga como
+especialización real, y no como tres clases con el mismo comportamiento.
