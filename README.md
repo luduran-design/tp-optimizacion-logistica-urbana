@@ -211,3 +211,165 @@ tiempo, la otra respeta tiempo sin mirar distancia. Es lo que hace que sean
 comparables entre sí y que la abstracción `PoliticaDeOrdenamiento` tenga
 sentido — dos implementaciones que producen resultados distintos sobre la
 misma lista de solicitudes, sin modificar ningún viaje.
+
+## Responsabilidades
+
+## Ubicación
+
+Representa un punto conocido de la matriz de distancias — puede ser el depósito o el destino de una solicitud.
+
+**Es responsable de:**
+- Guardar su identidad (id), nombre y descripción.
+- Definir cuándo dos ubicaciones son la misma (por id, no por ser el mismo objeto en memoria), para que pueda usarse como clave en la matriz de distancias.
+
+**No es responsable de:**
+- Calcular distancias o rutas — eso es trabajo exclusivo de MatrizDistancias.
+- Saber si es un depósito por defecto (una Ubicacion común siempre responde que no; solo Deposito responde que sí).
+
+## Deposito
+
+Representa el punto especial del que sale y al que regresa todo viaje.
+
+**Es responsable de:**
+- Confirmar que efectivamente es un depósito (es_deposito() = True).
+
+**No es responsable de:**
+- Nada más. Hereda toda su identidad, comparación y representación de Ubicacion sin agregar ningún dato propio. Es una especialización de rol, no una entidad distinta.
+
+## Articulo
+
+Representa una unidad de carga dentro de una solicitud.
+
+**Es responsable de:**
+- Guardar su peso y volumen.
+- Su propia identidad y comparación por id.
+
+**No es responsable de:**
+- Sumar totales. Un artículo ya es su propio peso y volumen; el total es un concepto que solo existe para un conjunto de artículos, y por eso vive en Solicitud.
+- Conocer su ventana horaria, su solicitud, ni el transporte que lo va a llevar.
+
+## Ventana
+
+Representa el rango horario dentro del cual se puede atender una solicitud.
+
+**Es responsable de:**
+- Determinar si un instante dado llega tarde respecto del cierre de la ventana.
+- Calcular a qué hora arranca realmente el servicio, considerando la espera si el transporte llega antes de que la ventana abra.
+
+**No es responsable de:**
+- Conocer la solicitud a la que pertenece, su destino, ni ningún otro dato de la entrega, solo maneja horarios.
+
+## Solicitud
+
+Representa una entrega indivisible: un conjunto de artículos con un destino y una ventana horaria.
+
+**Es responsable de:**
+- Sus artículos, su destino y su ventana.
+- Saber si está actualmente asignada a algún viaje (esta_asignada()), y exponer los únicos dos métodos que pueden cambiar ese estado (marcar_como_asignada() / desmarcar_como_asignada()).
+
+**No es responsable de:**
+- Definir su posición dentro de un viaje, eso lo decide Viaje/Itinerario.
+- Saber a qué viaje pertenece. Deliberadamente no guarda una referencia al viaje, solo un indicador de sí/no, para mantener bajo el acoplamiento entre ambas clases.
+
+## Transporte (y sus subtipos Motocicleta, Furgoneta, Camion)
+
+Representa un vehículo disponible para hacer entregas. Es una clase abstracta: "un transporte" a secas no existe, siempre es uno de sus tres subtipos concretos.
+
+**Es responsable de:**
+- Sus capacidades, velocidad, costos y factor ambiental.
+- Calcular su propio costo de un recorrido (igual para los tres subtipos).
+- Calcular su propio impacto ambiental, con una fórmula distinta según el subtipo: Furgoneta es lineal pura, Motocicleta suma un costo fijo de arranque en frío, y Camion multiplica según qué porcentaje de su capacidad va cargando.
+
+**No es responsable de:**
+- Elegir qué solicitudes llevar ni decidir rutas, eso es de Viaje, Itinerario y las políticas de ordenamiento.
+
+## MatrizDistancias
+
+Representa la tabla de distancias conocidas entre ubicaciones, en un sentido dirigido.
+
+**Es responsable de:**
+- Guardar y devolver la distancia entre un origen y un destino.
+- Avisar si falta un tramo, sin que el resto del sistema necesite saber cómo está indexada internamente.
+
+**No es responsable de:**
+- Calcular distancias nuevas (son datos de entrada, no un cálculo geométrico), ni de saber nada sobre horarios o transportes.
+
+## Itinerario
+
+Representa el cálculo de una secuencia candidata de paradas, recorrida desde el depósito.
+
+**Es responsable de:**
+- Recorrer la secuencia y calcular, de forma coherente, horarios de llegada/salida y distancia total.
+- Determinar si esa secuencia es factible (respeta capacidad y ventanas).
+
+**No es responsable de:**
+- Confirmar nada de forma permanente — es un objeto transitorio, descartable, que solo sirve para validar una propuesta antes de que Viaje decida adoptarla o no.
+- Conocer el estado del viaje ni sus incidentes.
+
+## Parada
+
+Representa la visita a una solicitud dentro de un viaje ya en curso.
+
+**Es responsable de:**
+- Su orden, su llegada prevista y su resultado (pendiente, entregada o fallida).
+
+**No es responsable de:**
+- Reutilizarse en otro viaje — nace y muere con ese viaje puntual.
+- Decidir si el viaje entero es factible — esa es una pregunta que responde Itinerario sobre el conjunto, no cada parada por separado.
+
+## Viaje
+
+Representa una secuencia planificada de entregas para una fecha, con un transporte y un depósito fijos.
+
+**Es responsable de:**
+- Su transporte, depósito, secuencia de paradas, estado, incidentes y comprobantes.
+- Ser el único que puede modificar esa secuencia — y solo a través de métodos que validan primero (agregar_solicitud, quitar_solicitud, reordenar), nunca por acceso directo a sus listas internas.
+- Controlar sus propias transiciones de estado (PLANIFICADO → EN_CURSO → FINALIZADO), siempre naciendo en PLANIFICADO.
+
+**No es responsable de:**
+- Calcular la geometría de una ruta por su cuenta — delega ese cálculo en Itinerario y en MatrizDistancias.
+- Decidir qué orden sugerir para las solicitudes — eso es trabajo de las políticas de ordenamiento, y es opcional consultarlas.
+
+## Comprobante
+
+Representa la evidencia de que una entrega se realizó.
+
+**Es responsable de:**
+- Guardar la solicitud entregada, la fecha real y el receptor.
+
+**No es responsable de:**
+- Existir para un intento fallido — solo se genera cuando una parada termina entregada.
+
+## Incidente
+
+Representa un problema ocurrido durante el viaje.
+
+**Es responsable de:**
+- Su tipo, descripción, instante, y la entidad afectada (una solicitud o el transporte).
+
+**No es responsable de:**
+- Cambiar por sí solo la planificación del viaje — registrar un incidente es un hecho que se deja asentado, no una acción que dispare cambios automáticos.
+
+## PoliticaDeOrdenamiento (y sus subtipos VecinoMasCercano, MenorVentanaPrimero)
+
+Representa una estrategia para sugerir un orden de solicitudes. Es abstracta: cada política concreta define su propio criterio.
+
+**Es responsable de:**
+- Recibir un depósito, una lista de solicitudes y la matriz de distancias, y devolver un orden sugerido.
+
+**No es responsable de:**
+- Modificar ningún viaje.
+- Confirmar asignaciones ni garantizar que el orden sugerido sea factible (eso lo valida Itinerario si el operador decide aplicarlo).
+
+## Empresa
+
+Representa el punto de entrada del dominio — separa la lógica de negocio del punto de arranque del programa (main.py).
+
+**Es responsable de:**
+- Guardar el depósito y la matriz de distancias de la empresa.
+- Registrar transportes y solicitudes, y ser la única que puede crear viajes nuevos (a través de crear_viaje, que garantiza que todo viaje se arme con el depósito y la matriz correctos).
+- Delegar en una política de ordenamiento cuando se le pide una sugerencia, sin necesitar saber cuál es.
+
+**No es responsable de:**
+- Calcular rutas o resultados de entregas por su cuenta — todo eso es trabajo de Viaje y sus colaboradores.
+
