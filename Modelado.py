@@ -107,10 +107,10 @@ class Solicitud:
     # peso/volumen de sus articulos (regla 2) y delega los horarios en su Ventana. 
     # Articulo es solo una unidad de carga.
     def peso_total(self):
-        pass
+        return sum(a.peso for a in self.articulos)
 
     def volumen_total(self):
-        pass
+        return sum(a.volumen for a in self.articulos)
 
     def llega_tarde(self, instante):
         pass
@@ -164,7 +164,8 @@ class Transporte(ABC):
         pass
 
     def admite_carga(self, peso, volumen):
-        pass
+        return peso <= self.capacidad_peso and volumen <= self.capacidad_volumen
+
 
     def calcular_costo(self, kilometros, cantidad_paradas):
         pass
@@ -471,7 +472,7 @@ class Empresa:
     def crear_viaje(self, id_viaje, fecha, transporte, hora_salida):
 
         # Factory: nadie construye un Viaje sin pasar por aca.
-        
+
         viaje = Viaje(id_viaje, fecha, transporte,
                       self._deposito, self._matriz, hora_salida)
         self._viajes.append(viaje)
