@@ -154,7 +154,9 @@ class Transporte(ABC):
     
     # Abstracto: cada subtipo DEBE definir su propia formula de impacto (regla 9).
     @abstractmethod
-    def calcular_impacto(self, kilometros):
+    def calcular_impacto(self, kilometros,carga_kg):
+        """Contrato: todo transporte recibe km y carga transportada.
+        Cada subtipo decide si usa la carga o la ignora."""
         pass
     # Estos 3 metodos NO son abstractos: son iguales para todos los transportes, se implementan aca 
     # una sola vez y las subclases los heredan.
@@ -169,7 +171,10 @@ class Transporte(ABC):
     
 class Motocicleta(Transporte):
     PISO_ARRANQUE_FRIO = 0.5  # kg CO2 fijos por poner el motor en marcha (Atributo de clase)
-    def calcular_impacto(self, kilometros):
+    def calcular_impacto(self, kilometros,carga_kg):
+        # Ignora carga: la moto no cambia significativamente su
+        # emision segun cuanto lleve.
+
         # Costo fijo de arranque + costo lineal por km. En trayectos cortos
         # (el caso típico de una moto haciendo última milla), el piso fijo
         # pesa proporcionalmente más que en un trayecto largo — por eso NO
@@ -179,7 +184,7 @@ class Motocicleta(Transporte):
 
 
 class Furgoneta(Transporte):
-    def calcular_impacto(self, kilometros):
+    def calcular_impacto(self, kilometros, carga_kg):
         # Caso base, lineal. Con los datos del ejemplo de aceptación del
         # enunciado (45 km, factor 0.27) da 12.15 kg CO2 — el número exacto
         # que trae el README, así que sirve para validar la fórmula con un test.
@@ -188,14 +193,14 @@ class Furgoneta(Transporte):
 
 
 class Camion(Transporte):
-    def calcular_impacto(self, kilometros, carga_actual_kg = 0.0):
+    def calcular_impacto(self, kilometros, carga_kg):
         # Un camión cargado contamina más que uno vacío: se agrega un factor
         # multiplicativo que crece según qué porcentaje de su capacidad va
         # transportando. carga_actual_kg tiene default 0 para que la llamada
         # polimórfica transporte.calcular_impacto(distancia) siga funcionando
         # igual sin importar el subtipo real (si no se pasa carga, se asume
         # que va vacío y se calcula el piso mínimo de impacto).
-        factor_carga = 1 + (carga_actual_kg / self.capacidad_peso)
+        factor_carga = 1 + (carga_kg / self.capacidad_peso)
         return kilometros * self.factor_ambiental * factor_carga
 
 
