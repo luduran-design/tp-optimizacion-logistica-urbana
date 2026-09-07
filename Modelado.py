@@ -224,26 +224,30 @@ class Parada:
         pass
 
 class Viaje:
-    
-
-    
     def __init__(self, id_viaje, fecha, transporte, deposito, matriz, hora_salida):
         self._id = id_viaje
         self._fecha = fecha
-        self._transporte = transporte
-        self._deposito = deposito
-        self._matriz = matriz
-        self._hora_salida = hora_salida
-        self._estado = EstadoViaje.PLANIFICADO #el estado del viaje siempre debe empezar como planificado
-        #listas exclusivamente del viaje, imposible de tocar desde afuera
-        self._paradas = []
+        self._estado = EstadoViaje.PLANIFICADO
+        self._itinerario = Itinerario(deposito, hora_salida, matriz, transporte)
         self._comprobantes = []
         self._incidentes = []
 
-    # devuelven una copia de cada lista para que quien las lee no pueda modificar la interna
+    # --- Identidad y estado propios ---
     @property
-    def paradas(self):
-        return list(self._paradas)
+    def id(self):
+        return self._id
+
+    @property
+    def fecha(self):
+        return self._fecha
+
+    @property
+    def estado(self) -> EstadoViaje:
+        return self._estado
+
+    @property
+    def itinerario(self) -> Itinerario:
+        return self._itinerario
 
     @property
     def comprobantes(self):
@@ -252,39 +256,32 @@ class Viaje:
     @property
     def incidentes(self):
         return list(self._incidentes)
-    
-    def distancia_entre(self, origen, destino):
-        pass
 
-    def recorrer(self):
-        pass
+    # --- Delegacion al itinerario ---
+    @property
+    def paradas(self):
+        return self._itinerario.paradas
 
-    def es_factible(self):
-        pass
+    def distancia_total(self) -> float:
+        return self._itinerario.distancia_total
 
-    def carga_peso(self):
-        pass
+    def carga_peso(self) -> float:
+        return self._itinerario.carga_peso()
 
-    def carga_volumen(self):
-        pass
+    def carga_volumen(self) -> float:
+        return self._itinerario.carga_volumen()
 
-    def distancia_total(self):
-        pass
+    def es_factible(self) -> bool:
+        return self._itinerario.es_factible()
 
-    def costo(self):
-        pass
+    def costo(self) -> float:
+        return self._itinerario.costo()
 
-    def impacto_ambiental(self):
-        pass
-
-    def esta_completo(self):
-        pass
-
-    def parada_actual(self):
-        pass
+    def impacto_ambiental(self) -> float:
+        return self._itinerario.impacto()
 
     def agregar_solicitud(self, solicitud):
-        pass
+        self._itinerario.agregar(solicitud)
 
     def quitar_solicitud(self, solicitud):
         pass
@@ -292,7 +289,29 @@ class Viaje:
     def reordenar(self, secuencia):
         pass
 
+    # --- Maquina de estados (regla 10) ---
+
     def iniciar(self):
+        if self._estado != EstadoViaje.PLANIFICADO:
+            raise TransicionIlegalError(
+                f"No se puede iniciar un viaje en estado {self._estado.value}"
+            )
+        self._estado = EstadoViaje.EN_CURSO
+
+    def finalizar(self):
+        if self._estado != EstadoViaje.EN_CURSO:
+            raise TransicionIlegalError(
+                f"No se puede finalizar un viaje en estado {self._estado.value}"
+            )
+        self._estado = EstadoViaje.FINALIZADO
+
+    def recorrer(self):
+        pass
+
+    def esta_completo(self):
+        pass
+
+    def parada_actual(self):
         pass
 
     def registrar_entrega(self, solicitud, receptor, fecha_hora):
@@ -302,10 +321,8 @@ class Viaje:
         pass
 
     def registrar_incidente(self, incidente):
-        pass
+        self._incidentes.append(incidente)
 
-    def finalizar(self):
-        pass
 
 class Comprobante:
     def __init__(self, nro, solicitud, fecha_hora_real, receptor):
@@ -381,23 +398,42 @@ class Itinerario:
         self._distancia_total = 0.0
         self._hora_regreso = None
 
+    @property
+    def paradas(self):
+        return list(self._paradas) 
+
+    @property
+    def distancia_total(self) -> float:
+        return self._distancia_total
+
+    @property
+    def hora_regreso(self):
+        return self._hora_regreso
+
+    def carga_peso(self) -> float:
+        return sum(p.solicitud.peso_total() for p in self._paradas)
+
+    def carga_volumen(self) -> float:
+        return sum(p.solicitud.volumen_total() for p in self._paradas)
+
     def agregar(self, solicitud) -> None:
-        pass  # recalcula llegada, espera (regla 6) y distancia para esta parada
+        # Regla 7: si al recalcular queda no factible, revertir todo cambio.
+        pass
 
     def es_factible(self) -> bool:
-        pass  # ventanas cumplidas + capacidad respetada
-
-    def get_paradas(self):
         pass
 
-    def get_distancia_total(self) -> float:
-        pass
+    def costo(self) -> float:
+        return self._transporte.calcular_costo(
+            self._distancia_total, len(self._paradas)
+        )
 
-    def get_costo(self) -> float:
-        pass  # delega en self._transporte.calcular_costo(...)
-
-    def get_impacto(self) -> float:
-        pass  # delega en self._transporte.calcular_impacto(...)
+    def impacto(self) -> float:
+        # Llamada polimorfica: SIEMPRE pasa la carga.
+        # Cada transporte decide si la usa o no.
+        return self._transporte.calcular_impacto(
+            self._distancia_total, self.carga_peso()
+        )
 
 class Empresa:
     def __init__(self, deposito, matriz):
@@ -407,25 +443,39 @@ class Empresa:
         self._viajes = []
         self._solicitudes = []
 
-    def get_deposito(self):
-        pass
+    @property
+    def deposito(self):
+        return self._deposito
 
-    def get_flota(self):
-        pass
+    @property
+    def flota(self):
+        return list(self._flota)
 
-    def get_solicitudes_pendientes(self):
-        pass  # filtra las que tienen esta_asignada() == False
+    @property
+    def viajes(self):
+        return list(self._viajes)
+
+    @property
+    def solicitudes(self):
+        return list(self._solicitudes)
+
+    def solicitudes_pendientes(self):
+        return [s for s in self._solicitudes if not s.esta_asignada()]
 
     def registrar_transporte(self, transporte) -> None:
-        pass
+        self._flota.append(transporte)
 
     def registrar_solicitud(self, solicitud) -> None:
-        pass
+        self._solicitudes.append(solicitud)
 
-    def crear_viaje(self, fecha, transporte, hora_salida):
-        pass  # factory: nadie construye un Viaje sin pasar por acá
+    def crear_viaje(self, id_viaje, fecha, transporte, hora_salida):
+
+        # Factory: nadie construye un Viaje sin pasar por aca.
+        
+        viaje = Viaje(id_viaje, fecha, transporte,
+                      self._deposito, self._matriz, hora_salida)
+        self._viajes.append(viaje)
+        return viaje
 
     def consultar_politica(self, politica, solicitudes):
-        # delega en politica.sugerir_orden(...) — Empresa no sabe
-        # cuál política es, solo la recibe y la usa una vez (regla 13)
-        pass
+        return politica.sugerir_orden(self._deposito, solicitudes, self._matriz)
