@@ -2,6 +2,31 @@ from abc import ABC, abstractmethod
 # ABC + abstractmethod: permiten declarar clases "molde" que no se pueden instanciar solas 
 # y obligan a las subclases a implementar ciertos metodos.
 
+from enum import Enum
+
+class EstadoViaje(Enum):
+    PLANIFICADO = "PLANIFICADO"
+    EN_CURSO = "EN_CURSO"
+    FINALIZADO = "FINALIZADO"
+
+
+class TipoIncidente(Enum):
+    DANIO = "DANIO"
+    AUSENTE = "AUSENTE"
+    RETRASO = "RETRASO"
+
+
+class ResultadoParada(Enum):
+    ENTREGADA = "ENTREGADA"
+    FALLIDA = "FALLIDA"
+
+
+class TransicionIlegalError(Exception):
+    """Se lanza al intentar una transicion no permitida en la maquina
+    de estados del Viaje (regla 10)."""
+    pass
+
+
 class Ubicacion:
     def __init__(self, id, nombre, descripcion):
         self.id = id
@@ -176,6 +201,10 @@ class Camion(Transporte):
 
 class Parada:
     def __init__(self, orden, solicitud, llegada_prevista, resultado):
+        if not isinstance(resultado, ResultadoParada):
+            raise ValueError(f"resultado debe ser un ResultadoParada, no {resultado!r}")
+
+        
         self.orden = orden
         self.solicitud = solicitud
         self.llegada_prevista = llegada_prevista
@@ -191,10 +220,7 @@ class Parada:
 
 class Viaje:
     
-    # variables para poder aplicar en el estado del viaje
-    PLANIFICADO = "PLANIFICADO"
-    EN_CURSO = "EN_CURSO"
-    FINALIZADO = "FINALIZADO"
+
     
     def __init__(self, id_viaje, fecha, transporte, deposito, matriz, hora_salida):
         self._id = id_viaje
@@ -203,7 +229,7 @@ class Viaje:
         self._deposito = deposito
         self._matriz = matriz
         self._hora_salida = hora_salida
-        self._estado = Viaje.PLANIFICADO #el estado del viaje siempre debe empezar como planificado
+        self._estado = EstadoViaje.PLANIFICADO #el estado del viaje siempre debe empezar como planificado
         #listas exclusivamente del viaje, imposible de tocar desde afuera
         self._paradas = []
         self._comprobantes = []
@@ -285,6 +311,13 @@ class Comprobante:
 
 class Incidente:
     def __init__(self, id, tipo, fecha_hora, descripcion, afectado):
+        if not isinstance(tipo, TipoIncidente):
+            raise ValueError(f"tipo debe ser un TipoIncidente, no {tipo!r}")
+        
+        if not descripcion:
+            raise ValueError("La descripcion del incidente no puede estar vacia")
+
+        
         self.id = id
         self.tipo = tipo
         self.fecha_hora = fecha_hora
