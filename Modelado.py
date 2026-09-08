@@ -21,14 +21,37 @@ class ResultadoParada(Enum):
     FALLIDA = "FALLIDA"
 
 
-class TransicionIlegalError(Exception):
-    """Se lanza al intentar una transicion no permitida en la maquina
-    de estados del Viaje (regla 10)."""
+class ErrorLogistica(Exception):
+    """Raiz de todas las excepciones del dominio logistico."""
+    pass
+
+class DatosInvalidos(ErrorLogistica):
+    """Dato faltante, vacio, negativo o de tipo incorrecto."""
+    pass
+
+class CapacidadExcedida(ErrorLogistica):
+    """La carga supera la capacidad del transporte."""
+    pass
+
+class RutaIncompleta(ErrorLogistica):
+    """Falta un tramo en la matriz de distancias."""
+    pass
+
+class VentanaIncumplida(ErrorLogistica):
+    """La llegada cae fuera de la ventana horaria."""
+    pass
+
+class TransicionIlegal(ErrorLogistica):
+    """Transicion no permitida en la maquina de estados del Viaje."""
     pass
 
 
 class Ubicacion:
     def __init__(self, id, nombre, descripcion):
+        if not id:
+            raise DatosInvalidos("El id de la ubicacion no puede ser vacio.")
+        if not nombre:
+            raise DatosInvalidos("El nombre de la ubicacion no puede ser vacio.")
         self.id = id
         self.nombre = nombre
         self.descripcion = descripcion
@@ -54,7 +77,16 @@ class Ubicacion:
         return False
 
 class Articulo:
+    
     def __init__(self, id, nombre, peso, volumen):
+        if not id:
+            raise DatosInvalidos("El id del articulo no puede ser vacio")
+        if not nombre:
+            raise DatosInvalidos("El nombre del articulo no puede ser vacio")
+        if peso <= 0:
+            raise DatosInvalidos("El peso del articulo debe ser positivo")
+        if volumen <= 0:
+            raise DatosInvalidos("El volumen del articulo debe ser positivo")
         self.id = id
         self.nombre = nombre
         self.peso = peso
@@ -75,6 +107,8 @@ class Articulo:
 # mudaron aca desde Articulo, que no debe saber de tiempos segun las reglas.
 class Ventana:
     def __init__(self, inicio, fin):
+        if inicio >= fin:
+            raise DatosInvalidos("El inicio de la ventana debe ser anterior al fin")
         self.inicio = inicio
         self.fin = fin
 
@@ -86,6 +120,15 @@ class Ventana:
 
 class Solicitud:
     def __init__(self, id, destino, ventana, articulos):
+        if not id:
+            raise DatosInvalidos("El id de la solicitud no puede ser vacio")
+        if destino is None:
+            raise DatosInvalidos("La solicitud debe tener un destino")
+        # is None en vez de not: preguntamos si falta el objeto, no su valor de verdad.
+        if ventana is None:
+            raise DatosInvalidos("La solicitud debe tener una ventana horaria")
+        if not articulos:
+            raise DatosInvalidos("La solicitud debe tener al menos un articulo")
         self.id = id
         self.destino = destino
         self.ventana = ventana
@@ -132,7 +175,21 @@ class Transporte(ABC):
 # Furgoneta o Camion. No se puede instanciar sola.
     def __init__(self, id, capacidad_peso, capacidad_volumen, velocidad_media,
                  costo_por_km, costo_por_parada, factor_ambiental):
-        
+        if not id:
+            raise DatosInvalidos("El id del transporte no puede ser vacio")
+        if capacidad_peso <= 0:
+            raise DatosInvalidos("La capacidad de peso debe ser positiva")
+        if capacidad_volumen <= 0:
+            raise DatosInvalidos("La capacidad de volumen debe ser positiva")
+        if velocidad_media <= 0:
+            raise DatosInvalidos("La velocidad media debe ser positiva")
+        # Costos y factor: cero es valido, negativo no.
+        if costo_por_km < 0:
+            raise DatosInvalidos("El costo por km no puede ser negativo")
+        if costo_por_parada < 0:
+            raise DatosInvalidos("El costo por parada no puede ser negativo")
+        if factor_ambiental < 0:
+            raise DatosInvalidos("El factor ambiental no puede ser negativo")
         self.id = id
         self.capacidad_peso = capacidad_peso
         self.capacidad_volumen = capacidad_volumen
@@ -208,9 +265,7 @@ class Camion(Transporte):
 class Parada:
     def __init__(self, orden, solicitud, llegada_prevista, resultado):
         if not isinstance(resultado, ResultadoParada):
-            raise ValueError(f"resultado debe ser un ResultadoParada, no {resultado!r}")
-
-        
+            raise DatosInvalidos(f"resultado debe ser un ResultadoParada, no {resultado!r}")
         self.orden = orden
         self.solicitud = solicitud
         self.llegada_prevista = llegada_prevista
@@ -247,7 +302,7 @@ class Viaje:
         return self._estado
 
     @property
-    def itinerario(self) -> Itinerario:
+    def itinerario(self) -> "Itinerario":
         return self._itinerario
 
     @property
@@ -294,14 +349,14 @@ class Viaje:
 
     def iniciar(self):
         if self._estado != EstadoViaje.PLANIFICADO:
-            raise TransicionIlegalError(
+            raise TransicionIlegal(
                 f"No se puede iniciar un viaje en estado {self._estado.value}"
             )
         self._estado = EstadoViaje.EN_CURSO
 
     def finalizar(self):
         if self._estado != EstadoViaje.EN_CURSO:
-            raise TransicionIlegalError(
+            raise TransicionIlegal(
                 f"No se puede finalizar un viaje en estado {self._estado.value}"
             )
         self._estado = EstadoViaje.FINALIZADO
@@ -335,12 +390,9 @@ class Comprobante:
 class Incidente:
     def __init__(self, id, tipo, fecha_hora, descripcion, afectado):
         if not isinstance(tipo, TipoIncidente):
-            raise ValueError(f"tipo debe ser un TipoIncidente, no {tipo!r}")
-        
+            raise DatosInvalidos(f"tipo debe ser un TipoIncidente, no {tipo!r}")
         if not descripcion:
-            raise ValueError("La descripcion del incidente no puede estar vacia")
-
-        
+            raise DatosInvalidos("La descripcion del incidente no puede estar vacia")
         self.id = id
         self.tipo = tipo
         self.fecha_hora = fecha_hora

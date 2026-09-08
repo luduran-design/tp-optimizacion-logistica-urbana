@@ -6,7 +6,7 @@ from Modelado import (
     Parada, Incidente,
     MatrizDistancias, Itinerario, Viaje, Empresa,
     EstadoViaje, TipoIncidente, ResultadoParada,
-    TransicionIlegalError,
+    TransicionIlegal, DatosInvalidos, 
 )
 
 
@@ -152,11 +152,11 @@ class TestEnumParada:
 
     def test_resultado_string_libre_lanza_error(self):
         # Antes: aceptaba "CANCELADA" sin chistar. Ahora rechaza.
-        with pytest.raises(ValueError, match="ResultadoParada"):
+        with pytest.raises(DatosInvalidos, match="ResultadoParada"):
             Parada(1, _solicitud_basica(), 10, "CANCELADA")
 
     def test_resultado_none_lanza_error(self):
-        with pytest.raises(ValueError, match="ResultadoParada"):
+        with pytest.raises(DatosInvalidos, match="ResultadoParada"):
             Parada(1, _solicitud_basica(), 10, None)
 
 
@@ -168,12 +168,12 @@ class TestEnumIncidente:
     def test_tipo_string_libre_lanza_error(self):
         # El ejemplo textual del ayudante: "EL_PERRO_SE_COMIO_EL_PAQUETE"
         # ya no se puede construir.
-        with pytest.raises(ValueError, match="TipoIncidente"):
+        with pytest.raises(DatosInvalidos, match="TipoIncidente"):
             Incidente("I1", "EL_PERRO_SE_COMIO_EL_PAQUETE", 10, "x", None)
 
     def test_descripcion_vacia_lanza_error(self):
         # Regla 12 prohibe descripcion vacia.
-        with pytest.raises(ValueError, match="descripcion"):
+        with pytest.raises(DatosInvalidos, match="descripcion"):
             Incidente("I1", TipoIncidente.DANIO, 10, "", None)
 
 
@@ -205,12 +205,12 @@ class TestEstadoViaje_Maquina:
     def test_iniciar_dos_veces_lanza_error(self):
         v = _make_viaje_planificado()
         v.iniciar()
-        with pytest.raises(TransicionIlegalError):
+        with pytest.raises(TransicionIlegal):
             v.iniciar()
 
     def test_finalizar_desde_planificado_lanza_error(self):
         # No se puede saltar de PLANIFICADO directo a FINALIZADO.
-        with pytest.raises(TransicionIlegalError):
+        with pytest.raises(TransicionIlegal):
             _make_viaje_planificado().finalizar()
 
     def test_ciclo_completo_planificado_encurso_finalizado(self):
@@ -223,7 +223,7 @@ class TestEstadoViaje_Maquina:
         v = _make_viaje_planificado()
         v.iniciar()
         v.finalizar()
-        with pytest.raises(TransicionIlegalError):
+        with pytest.raises(TransicionIlegal):
             v.finalizar()
 
 
