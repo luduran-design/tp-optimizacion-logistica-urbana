@@ -301,3 +301,195 @@ class TestEmpresa:
         pendientes = e.solicitudes_pendientes()
         assert s1 in pendientes
         assert s2 not in pendientes
+
+
+# ============================================================
+# Jerarquia de excepciones
+# ============================================================
+# Todas las excepciones del dominio deben heredar de ErrorLogistica.
+# Esto permite atrapar cualquier error del dominio con un solo
+# "except ErrorLogistica" sin tener que listarlas una por una.
+
+from Modelado import (
+    ErrorLogistica, CapacidadExcedida, RutaIncompleta, VentanaIncumplida,
+)
+
+
+class TestJerarquiaExcepciones:
+    def test_datos_invalidos_hereda_de_error_logistica(self):
+        assert issubclass(DatosInvalidos, ErrorLogistica)
+
+    def test_capacidad_excedida_hereda_de_error_logistica(self):
+        assert issubclass(CapacidadExcedida, ErrorLogistica)
+
+    def test_ruta_incompleta_hereda_de_error_logistica(self):
+        assert issubclass(RutaIncompleta, ErrorLogistica)
+
+    def test_ventana_incumplida_hereda_de_error_logistica(self):
+        assert issubclass(VentanaIncumplida, ErrorLogistica)
+
+    def test_transicion_ilegal_hereda_de_error_logistica(self):
+        assert issubclass(TransicionIlegal, ErrorLogistica)
+
+    def test_error_logistica_hereda_de_exception(self):
+        # Sanity check: la raiz debe ser una Exception normal.
+        assert issubclass(ErrorLogistica, Exception)
+
+    def test_datos_invalidos_atrapable_como_error_logistica(self):
+        # Uso practico: un solo except cubre toda la familia.
+        try:
+            Ubicacion("", "nombre", "")
+        except ErrorLogistica:
+            return  # OK, lo atrapamos
+        assert False, "Deberia haberse lanzado un ErrorLogistica"
+
+
+# ============================================================
+# Validaciones de constructor (Ubicacion)
+# ============================================================
+
+class TestValidacionUbicacion:
+    def test_id_vacio_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="id"):
+            Ubicacion("", "Palermo", "")
+
+    def test_nombre_vacio_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="nombre"):
+            Ubicacion("U1", "", "")
+
+    def test_descripcion_vacia_es_valida(self):
+        # La descripcion SI puede quedar vacia, no lanza error.
+        u = Ubicacion("U1", "Palermo", "")
+        assert u.descripcion == ""
+
+
+# ============================================================
+# Validaciones de constructor (Articulo)
+# ============================================================
+
+class TestValidacionArticulo:
+    def test_id_vacio_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="id"):
+            Articulo("", "libro", 1.0, 0.5)
+
+    def test_nombre_vacio_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="nombre"):
+            Articulo("A1", "", 1.0, 0.5)
+
+    def test_peso_cero_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="peso"):
+            Articulo("A1", "libro", 0, 0.5)
+
+    def test_peso_negativo_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="peso"):
+            Articulo("A1", "libro", -1.0, 0.5)
+
+    def test_volumen_cero_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="volumen"):
+            Articulo("A1", "libro", 1.0, 0)
+
+    def test_volumen_negativo_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="volumen"):
+            Articulo("A1", "libro", 1.0, -0.5)
+
+
+# ============================================================
+# Validaciones de constructor (Ventana)
+# ============================================================
+
+class TestValidacionVentana:
+    def test_ventana_valida_construye(self):
+        v = Ventana(10, 20)
+        assert v.inicio == 10 and v.fin == 20
+
+    def test_inicio_igual_a_fin_lanza_error(self):
+        # Una ventana de duracion cero no tiene sentido.
+        with pytest.raises(DatosInvalidos):
+            Ventana(10, 10)
+
+    def test_inicio_mayor_a_fin_lanza_error(self):
+        with pytest.raises(DatosInvalidos):
+            Ventana(20, 10)
+
+
+# ============================================================
+# Validaciones de constructor (Solicitud)
+# ============================================================
+
+class TestValidacionSolicitud:
+    def _destino(self):
+        return Ubicacion("U1", "Palermo", "")
+
+    def test_id_vacio_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="id"):
+            Solicitud("", self._destino(), Ventana(0, 100), _articulos_basicos())
+
+    def test_destino_none_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="destino"):
+            Solicitud("S1", None, Ventana(0, 100), _articulos_basicos())
+
+    def test_ventana_none_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="ventana"):
+            Solicitud("S1", self._destino(), None, _articulos_basicos())
+
+    def test_articulos_vacio_lanza_error(self):
+        # Regla: una solicitud tiene que llevar al menos un articulo.
+        with pytest.raises(DatosInvalidos, match="articulo"):
+            Solicitud("S1", self._destino(), Ventana(0, 100), [])
+
+
+# ============================================================
+# Validaciones de constructor (Transporte)
+# ============================================================
+
+class TestValidacionTransporte:
+    """Se prueba a traves de Furgoneta porque Transporte es abstracta."""
+
+    def test_transporte_valido_construye(self):
+        # Sanity: los defaults del helper son validos.
+        _, f, _ = _make_transportes()
+        assert f.id == "F1"
+
+    def test_id_vacio_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="id"):
+            Furgoneta("", 1000, 5.0, 60, 200, 50, 0.27)
+
+    def test_capacidad_peso_cero_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="peso"):
+            Furgoneta("F1", 0, 5.0, 60, 200, 50, 0.27)
+
+    def test_capacidad_peso_negativa_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="peso"):
+            Furgoneta("F1", -100, 5.0, 60, 200, 50, 0.27)
+
+    def test_capacidad_volumen_cero_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="volumen"):
+            Furgoneta("F1", 1000, 0, 60, 200, 50, 0.27)
+
+    def test_velocidad_media_cero_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="velocidad"):
+            Furgoneta("F1", 1000, 5.0, 0, 200, 50, 0.27)
+
+    def test_costo_por_km_negativo_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="costo"):
+            Furgoneta("F1", 1000, 5.0, 60, -1, 50, 0.27)
+
+    def test_costo_por_km_cero_es_valido(self):
+        # Cero es valido (podria ser un transporte gratis en pruebas).
+        f = Furgoneta("F1", 1000, 5.0, 60, 0, 50, 0.27)
+        assert f.costo_por_km == 0
+
+    def test_costo_por_parada_negativo_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="costo"):
+            Furgoneta("F1", 1000, 5.0, 60, 200, -50, 0.27)
+
+    def test_factor_ambiental_negativo_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="factor"):
+            Furgoneta("F1", 1000, 5.0, 60, 200, 50, -0.1)
+
+    def test_factor_ambiental_cero_es_valido(self):
+        # Un vehiculo electrico ideal podria tener factor cero.
+        f = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0)
+        assert f.factor_ambiental == 0
+
+
