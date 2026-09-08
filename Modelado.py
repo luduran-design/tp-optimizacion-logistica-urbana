@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 # y obligan a las subclases a implementar ciertos metodos.
 
 from enum import Enum
+from datetime import timedelta
 
 class EstadoViaje(Enum):
     PLANIFICADO = "PLANIFICADO"
@@ -17,6 +18,7 @@ class TipoIncidente(Enum):
 
 
 class ResultadoParada(Enum):
+    PENDIENTE = "PENDIENTE"
     ENTREGADA = "ENTREGADA"
     FALLIDA = "FALLIDA"
 
@@ -113,10 +115,10 @@ class Ventana:
         self.fin = fin
 
     def llega_tarde(self, instante):
-        pass
+        return instante > self.fin
 
     def inicio_de_servicio(self, llegada):
-        pass
+        return max(llegada, self.inicio)
 
 class Solicitud:
     def __init__(self, id, destino, ventana, articulos):
@@ -156,10 +158,10 @@ class Solicitud:
         return sum(a.volumen for a in self.articulos)
 
     def llega_tarde(self, instante):
-        pass
+        return self.ventana.llega_tarde(instante)
 
     def espera_desde(self, llegada):
-        pass
+        return self.ventana.inicio_de_servicio(llegada)
 
     def esta_asignada(self):
         return self._asignada
@@ -218,14 +220,14 @@ class Transporte(ABC):
     # Estos 3 metodos NO son abstractos: son iguales para todos los transportes, se implementan aca 
     # una sola vez y las subclases los heredan.
     def tiempo_de_tramo(self, kilometros):
-        pass
+        return kilometros / self.velocidad_media
 
     def admite_carga(self, peso, volumen):
         return peso <= self.capacidad_peso and volumen <= self.capacidad_volumen
 
 
     def calcular_costo(self, kilometros, cantidad_paradas):
-        pass
+        return kilometros * self.costo_por_km + cantidad_paradas * self.costo_por_parada
     
 class Motocicleta(Transporte):
     PISO_ARRANQUE_FRIO = 0.5  # kg CO2 fijos por poner el motor en marcha (Atributo de clase)
@@ -263,7 +265,7 @@ class Camion(Transporte):
 
 
 class Parada:
-    def __init__(self, orden, solicitud, llegada_prevista, resultado):
+    def __init__(self, orden, solicitud, llegada_prevista, resultado=ResultadoParada.PENDIENTE):
         if not isinstance(resultado, ResultadoParada):
             raise DatosInvalidos(f"resultado debe ser un ResultadoParada, no {resultado!r}")
         self.orden = orden
@@ -271,13 +273,23 @@ class Parada:
         self.llegada_prevista = llegada_prevista
         self.resultado = resultado
     def esta_pendiente(self):
-        pass
+        return self.resultado == ResultadoParada.PENDIENTE
 
     def entregar(self, receptor, fecha_hora):
-        pass
+        if self.resultado != ResultadoParada.PENDIENTE:
+            raise TransicionIlegal(f"Esta parada ya fue resuelta: {self.resultado}")
+        self.resultado = ResultadoParada.ENTREGADA
+        return Comprobante(
+            nro=f"{self.solicitud.id}-{fecha_hora}",
+            solicitud=self.solicitud,
+            fecha_hora_real=fecha_hora,
+            receptor=receptor,
+        )
 
     def marcar_fallida(self, incidente):
-        pass
+        if self.resultado != ResultadoParada.PENDIENTE:
+            raise TransicionIlegal(f"Esta parada ya fue resuelta: {self.resultado}")
+        self.resultado = ResultadoParada.FALLIDA
 
 class Viaje:
     def __init__(self, id_viaje, fecha, transporte, deposito, matriz, hora_salida):
@@ -433,13 +445,16 @@ class MatrizDistancias:
         self._distancias = {}  # dict[(Ubicacion, Ubicacion)] -> float
 
     def distancia(self, origen, destino) -> float:
-        pass
+        clave = (origen, destino)
+        if clave not in self._distancias:
+            raise RutaIncompleta(f"No hay tramo cargado de {origen} a {destino}")
+        return self._distancias[clave]
 
     def agregar_tramo(self, origen, destino, km: float) -> None:
-        pass
+        self._distancias[(origen, destino)] = km
 
     def contiene_tramo(self, origen, destino) -> bool:
-        pass
+        return (origen, destino) in self._distancias
 
 class Itinerario:
     def __init__(self, deposito, hora_salida, matriz, transporte):
@@ -450,6 +465,7 @@ class Itinerario:
         self._paradas = []
         self._distancia_total = 0.0
         self._hora_regreso = None
+        self._hora_ultima_salida = hora_salida
 
     @property
     def paradas(self):
@@ -471,7 +487,36 @@ class Itinerario:
 
     def agregar(self, solicitud) -> None:
         # Regla 7: si al recalcular queda no factible, revertir todo cambio.
-        pass
+        # Bloque 1 — Capacidad
+        peso_candidato = self.carga_peso() + solicitud.peso_total()
+        volumen_candidato = self.carga_volumen() + solicitud.volumen_total()
+        if not self._transporte.admite_carga(peso_candidato, volumen_candidato):
+            raise CapacidadExcedida(f"{solicitud} excede la capacidad del transporte")
+
+        # Bloque 2 — De donde salgo y a que hora
+        if self._paradas:
+            origen = self._paradas[-1].solicitud.destino
+        else:
+            origen = self._deposito
+        hora_disponible = self._hora_ultima_salida
+
+        # Bloque 3 — Calculo el tramo
+        km = self._matriz.distancia(origen, solicitud.destino)
+        tiempo_tramo = self._transporte.tiempo_de_tramo(km)
+        llegada = hora_disponible + tiempo_tramo
+
+        # Bloque 4 — Ventana horaria
+        if solicitud.llega_tarde(llegada):
+            raise VentanaIncumplida(f"{solicitud} no puede atenderse: se llegaria a las {llegada}")
+
+        # Bloque 5 — Recien aca, con todo validado, aplico el cambio real
+        inicio_servicio = solicitud.espera_desde(llegada)
+        fin_servicio = inicio_servicio + timedelta(minutes=10)
+
+        nueva_parada = Parada(len(self._paradas) + 1, solicitud, inicio_servicio)
+        self._paradas.append(nueva_parada)
+        self._distancia_total += km
+        self._hora_ultima_salida = fin_servicio
 
     def es_factible(self) -> bool:
         pass
