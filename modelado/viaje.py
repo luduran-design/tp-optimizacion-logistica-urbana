@@ -5,7 +5,7 @@ from modelado.comprobante import Comprobante
 
 
 class Viaje:
-    def _init_(self, id_viaje, fecha, transporte, deposito, matriz, hora_salida):
+    def __init__(self, id_viaje, fecha, transporte, deposito, matriz, hora_salida):
         self._id = id_viaje
         self._fecha = fecha
         self._estado = EstadoViaje.PLANIFICADO

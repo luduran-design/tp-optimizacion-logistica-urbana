@@ -2,7 +2,7 @@ from modelado.parada import Parada
 from modelado.excepciones import CapacidadExcedida, DatosInvalidos
 
 class Itinerario:
-    def _init_(self, deposito, hora_salida, matriz, transporte):
+    def __init__(self, deposito, hora_salida, matriz, transporte):
         self._deposito = deposito
         self._hora_salida = hora_salida
         self._matriz = matriz
@@ -113,4 +113,3 @@ class Itinerario:
             p.orden = i + 1
         self._recalcular_distancia()
 
-        
