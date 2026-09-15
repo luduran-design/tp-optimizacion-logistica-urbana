@@ -1,5 +1,5 @@
 from modelado.parada import Parada
-from modelado.excepciones import CapacidadExcedida
+from modelado.excepciones import CapacidadExcedida, DatosInvalidos
 
 class Itinerario:
     def __init__(self, deposito, hora_salida, matriz, transporte):

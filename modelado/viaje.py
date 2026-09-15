@@ -1,6 +1,7 @@
 from modelado.enums import EstadoViaje
-from modelado.excepciones import TransicionIlegal
+from modelado.excepciones import TransicionIlegal, DatosInvalidos
 from modelado.itinerario import Itinerario
+from modelado.comprobante import Comprobante
 
 
 class Viaje:
@@ -64,10 +65,14 @@ class Viaje:
         self._itinerario.agregar(solicitud)
 
     def quitar_solicitud(self, solicitud):
-        pass
+        if self._estado != EstadoViaje.PLANIFICADO:
+            raise TransicionIlegal("Solo se pueden quitar solicitudes en estado PLANIFICADO")
+        self._itinerario.quitar(solicitud)
 
     def reordenar(self, secuencia):
-        pass
+        if self._estado != EstadoViaje.PLANIFICADO:
+            raise TransicionIlegal("Solo se puede reordenar en estado PLANIFICADO")
+        self._itinerario.reordenar(secuencia)
 
     # --- Maquina de estados (regla 10) ---
 
@@ -86,19 +91,35 @@ class Viaje:
         self._estado = EstadoViaje.FINALIZADO
 
     def recorrer(self):
-        pass
+        if self._estado == EstadoViaje.PLANIFICADO:
+            self.iniciar()
+        elif self._estado == EstadoViaje.EN_CURSO and self.esta_completo():
+            self.finalizar()
 
     def esta_completo(self):
-        pass
+        return all(not p.esta_pendiente() for p in self._itinerario.paradas)
 
     def parada_actual(self):
-        pass
+        return next((p for p in self._itinerario.paradas if p.esta_pendiente()), None)
 
     def registrar_entrega(self, solicitud, receptor, fecha_hora):
-        pass
+        if self._estado != EstadoViaje.EN_CURSO:
+            raise TransicionIlegal("Solo se pueden registrar entregas en estado EN_CURSO")
+        parada = next((p for p in self._itinerario.paradas if p.solicitud == solicitud), None)
+        if parada is None:
+            raise DatosInvalidos(f"La solicitud {solicitud.id} no esta en este viaje")
+        parada.entregar(receptor, fecha_hora)
+        comprobante = Comprobante(len(self._comprobantes) + 1, solicitud, fecha_hora, receptor)
+        self._comprobantes.append(comprobante)
 
     def registrar_fallo(self, solicitud, incidente):
-        pass
+        if self._estado != EstadoViaje.EN_CURSO:
+            raise TransicionIlegal("Solo se pueden registrar fallos en estado EN_CURSO")
+        parada = next((p for p in self._itinerario.paradas if p.solicitud == solicitud), None)
+        if parada is None:
+            raise DatosInvalidos(f"La solicitud {solicitud.id} no esta en este viaje")
+        parada.marcar_fallida(incidente)
+        self.registrar_incidente(incidente)
 
     def registrar_incidente(self, incidente):
         self._incidentes.append(incidente)
