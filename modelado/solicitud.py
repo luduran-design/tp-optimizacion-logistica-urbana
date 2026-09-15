@@ -39,10 +39,10 @@ class Solicitud:
         return sum(a.volumen for a in self.articulos)
 
     def llega_tarde(self, instante):
-        pass
+        return self.ventana.llega_tarde(instante)
 
     def espera_desde(self, llegada):
-        pass
+        return self.ventana.inicio_de_servicio(llegada)
 
     def esta_asignada(self):
         return self._asignada

@@ -14,5 +14,7 @@ class TipoIncidente(Enum):
 
 
 class ResultadoParada(Enum):
+    PENDIENTE = "PENDIENTE"
     ENTREGADA = "ENTREGADA"
     FALLIDA = "FALLIDA"
+    

@@ -54,10 +54,10 @@ class Transporte(ABC):
     # Estos 3 metodos NO son abstractos: son iguales para todos los transportes, se implementan aca
     # una sola vez y las subclases los heredan.
     def tiempo_de_tramo(self, kilometros):
-        pass
+        return kilometros / self.velocidad_media
 
     def admite_carga(self, peso, volumen):
         return peso <= self.capacidad_peso and volumen <= self.capacidad_volumen
 
     def calcular_costo(self, kilometros, cantidad_paradas):
-        pass
+        return kilometros * self.costo_por_km + cantidad_paradas * self.costo_por_parada

@@ -11,7 +11,7 @@ class Ventana:
         self.fin = fin
 
     def llega_tarde(self, instante):
-        pass
+        return instante > self.fin
 
     def inicio_de_servicio(self, llegada):
-        pass
+        return max(llegada, self.inicio)
