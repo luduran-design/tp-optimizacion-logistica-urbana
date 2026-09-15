@@ -1,4 +1,4 @@
-"""Tests de Solicitud: comportamiento y validaciones de constructor."""
+"""Tests de Solicitud: comportamiento, validaciones, y delegacion a Ventana."""
 
 import pytest
 
@@ -46,3 +46,39 @@ class TestValidacionSolicitud:
         # Regla: una solicitud tiene que llevar al menos un articulo.
         with pytest.raises(DatosInvalidos, match="articulo"):
             Solicitud("S1", self._destino(), Ventana(0, 100), [])
+
+
+class TestDelegacionAVentana:
+    """Solicitud no reimplementa la logica horaria: delega en su Ventana.
+    Verificamos que los resultados coinciden con los de la ventana subyacente."""
+
+    def _solicitud_con_ventana(self, inicio, fin):
+        destino = Ubicacion("U1", "Palermo", "")
+        return Solicitud("S1", destino, Ventana(inicio, fin), _articulos_basicos())
+
+    def test_llega_tarde_delega_a_ventana(self):
+        s = self._solicitud_con_ventana(10, 20)
+        # Delegacion pura: el resultado tiene que coincidir con Ventana.llega_tarde.
+        assert s.llega_tarde(25) == s.ventana.llega_tarde(25)
+        assert s.llega_tarde(15) == s.ventana.llega_tarde(15)
+
+    def test_llega_tarde_con_instante_dentro_devuelve_false(self):
+        s = self._solicitud_con_ventana(10, 20)
+        assert s.llega_tarde(15) is False
+
+    def test_llega_tarde_con_instante_pasado_devuelve_true(self):
+        s = self._solicitud_con_ventana(10, 20)
+        assert s.llega_tarde(25) is True
+
+    def test_espera_desde_delega_a_ventana(self):
+        s = self._solicitud_con_ventana(10, 20)
+        assert s.espera_desde(5) == s.ventana.inicio_de_servicio(5)
+        assert s.espera_desde(15) == s.ventana.inicio_de_servicio(15)
+
+    def test_espera_desde_temprano_espera_al_inicio(self):
+        s = self._solicitud_con_ventana(10, 20)
+        assert s.espera_desde(5) == 10
+
+    def test_espera_desde_dentro_arranca_al_toque(self):
+        s = self._solicitud_con_ventana(10, 20)
+        assert s.espera_desde(15) == 15
