@@ -5,7 +5,7 @@ from modelado.comprobante import Comprobante
 
 
 class Viaje:
-    def __init__(self, id_viaje, fecha, transporte, deposito, matriz, hora_salida):
+    def _init_(self, id_viaje, fecha, transporte, deposito, matriz, hora_salida):
         self._id = id_viaje
         self._fecha = fecha
         self._estado = EstadoViaje.PLANIFICADO
@@ -123,3 +123,27 @@ class Viaje:
 
     def registrar_incidente(self, incidente):
         self._incidentes.append(incidente)
+        # --- Consulta (dict): todo lo calculado de un viaje en un solo lugar ---
+
+    def resumen(self):
+        """Devuelve un diccionario con los resultados del viaje.
+        Es una foto de solo lectura: no muta nada y cada llamada arma un dict nuevo."""
+        return {
+            "id": self._id,
+            "fecha": self._fecha,
+            "estado": self._estado.value,
+            "transporte": self._itinerario.transporte.id,
+            "deposito": self._itinerario.deposito.id,
+            "cantidad_paradas": len(self._itinerario.paradas),
+            "distancia_km": self.distancia_total(),
+            "carga_peso": self.carga_peso(),
+            "carga_volumen": self.carga_volumen(),
+            "costo": self.costo(),
+            "impacto_ambiental": self.impacto_ambiental(),
+            "hora_regreso": self._itinerario.hora_regreso,
+            "es_factible": self.es_factible(),
+            "entregas": len(self._comprobantes),
+            "incidentes": len(self._incidentes),
+        }
+
+    

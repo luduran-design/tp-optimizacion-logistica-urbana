@@ -2,7 +2,7 @@ from modelado.parada import Parada
 from modelado.excepciones import CapacidadExcedida, DatosInvalidos
 
 class Itinerario:
-    def __init__(self, deposito, hora_salida, matriz, transporte):
+    def _init_(self, deposito, hora_salida, matriz, transporte):
         self._deposito = deposito
         self._hora_salida = hora_salida
         self._matriz = matriz
@@ -22,6 +22,14 @@ class Itinerario:
     @property
     def hora_regreso(self):
         return self._hora_regreso
+
+    @property
+    def transporte(self):
+        return self._transporte
+
+    @property
+    def deposito(self):
+        return self._deposito
 
     def carga_peso(self) -> float:
         return sum(p.solicitud.peso_total() for p in self._paradas)
@@ -104,3 +112,5 @@ class Itinerario:
         for i, p in enumerate(self._paradas):
             p.orden = i + 1
         self._recalcular_distancia()
+
+        
