@@ -2,7 +2,7 @@
 
 import pytest
 
-from modelado import Parada, ResultadoParada, TransicionIlegal
+from modelado import Parada, ResultadoParada, TransicionIlegal, Incidente, TipoIncidente
 from tests.helpers import _solicitud_basica
 
 
@@ -22,6 +22,14 @@ class TestConstruccionParada:
         assert p.orden == 3
         assert p.solicitud == s
         assert p.llegada_prevista == 15
+
+    def test_arranca_sin_datos_de_cierre(self):
+        # Los datos de entrega y del incidente se completan al cerrar la parada.
+        # Al arranque son None.
+        p = Parada(1, _solicitud_basica(), 10)
+        assert p.receptor is None
+        assert p.fecha_hora_real is None
+        assert p.incidente is None
 
 
 class TestMaquinaEstadosParada:
@@ -65,3 +73,20 @@ class TestMaquinaEstadosParada:
         p.entregar("Juan", 20)
         with pytest.raises(TransicionIlegal):
             p.marcar_fallida(None)
+
+
+class TestDatosDeCierre:
+    """Al cerrar una parada, los datos que le pasamos quedan guardados en ella:
+    Parada es el registro de que paso, no solo un flag de estado."""
+
+    def test_entregar_guarda_receptor_y_fecha(self):
+        p = Parada(1, _solicitud_basica(), 10)
+        p.entregar(receptor="Juan", fecha_hora=20)
+        assert p.receptor == "Juan"
+        assert p.fecha_hora_real == 20
+
+    def test_marcar_fallida_guarda_incidente(self):
+        p = Parada(1, _solicitud_basica(), 10)
+        i = Incidente("I1", TipoIncidente.RETRASO, 15, "trafico", None)
+        p.marcar_fallida(i)
+        assert p.incidente is i

@@ -121,28 +121,53 @@ class Viaje:
     def parada_actual(self):
         return next((p for p in self._itinerario.paradas if p.esta_pendiente()), None)
 
+    # --- Ejecucion de paradas (regla 11) ---
+
+    def _parada_para(self, solicitud):
+        """Devuelve la parada actual si coincide con la solicitud pedida.
+
+        Regla 11: las paradas se resuelven en el orden planificado. Solo se
+        puede actuar sobre la proxima parada pendiente. Si la solicitud pedida
+        no es la actual (fuera de orden, ajena al viaje, o ya cerrada), lanza
+        TransicionIlegal explicando cual es la proxima.
+        """
+        actual = self.parada_actual()
+        if actual is None:
+            raise TransicionIlegal("El viaje no tiene paradas pendientes")
+        if actual.solicitud != solicitud:
+            raise TransicionIlegal(
+                f"La proxima parada es {actual.solicitud.id}, no {solicitud.id}"
+            )
+        return actual
+
     def registrar_entrega(self, solicitud, receptor, fecha_hora):
         if self._estado != EstadoViaje.EN_CURSO:
-            raise TransicionIlegal("Solo se pueden registrar entregas en estado EN_CURSO")
-        parada = next((p for p in self._itinerario.paradas if p.solicitud == solicitud), None)
-        if parada is None:
-            raise DatosInvalidos(f"La solicitud {solicitud.id} no esta en este viaje")
+            raise TransicionIlegal(
+                "Solo se pueden registrar entregas en estado EN_CURSO"
+            )
+        parada = self._parada_para(solicitud)
+        # Fabricamos el comprobante ANTES de cerrar la parada: si el receptor
+        # es vacio, Comprobante lanza DatosInvalidos y la parada queda intacta.
+        # Regla 7 aplicada tambien a esta transicion.
+        comprobante = Comprobante(
+            len(self._comprobantes) + 1, solicitud, fecha_hora, receptor
+        )
         parada.entregar(receptor, fecha_hora)
-        comprobante = Comprobante(len(self._comprobantes) + 1, solicitud, fecha_hora, receptor)
         self._comprobantes.append(comprobante)
 
     def registrar_fallo(self, solicitud, incidente):
         if self._estado != EstadoViaje.EN_CURSO:
-            raise TransicionIlegal("Solo se pueden registrar fallos en estado EN_CURSO")
-        parada = next((p for p in self._itinerario.paradas if p.solicitud == solicitud), None)
-        if parada is None:
-            raise DatosInvalidos(f"La solicitud {solicitud.id} no esta en este viaje")
+            raise TransicionIlegal(
+                "Solo se pueden registrar fallos en estado EN_CURSO"
+            )
+        parada = self._parada_para(solicitud)
         parada.marcar_fallida(incidente)
         self.registrar_incidente(incidente)
 
     def registrar_incidente(self, incidente):
         self._incidentes.append(incidente)
-        # --- Consulta (dict): todo lo calculado de un viaje en un solo lugar ---
+
+    # --- Consulta (dict): todo lo calculado de un viaje en un solo lugar ---
 
     def resumen(self):
         """Devuelve un diccionario con los resultados del viaje.
@@ -164,4 +189,3 @@ class Viaje:
             "entregas": len(self._comprobantes),
             "incidentes": len(self._incidentes),
         }
-
