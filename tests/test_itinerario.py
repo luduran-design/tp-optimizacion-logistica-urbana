@@ -4,7 +4,7 @@ import pytest
 
 from modelado import (
     Itinerario, MatrizDistancias, Deposito, Ubicacion, Ventana, Solicitud,
-    Articulo, Furgoneta, DatosInvalidos, CapacidadExcedida,
+    Articulo, Furgoneta, DatosInvalidos, CapacidadExcedida, RutaIncompleta
 )
 
 
@@ -123,6 +123,25 @@ class TestAgregarSolicitud:
         assert it.distancia_total == distancia_previa
         assert s_pesada.esta_asignada() is False
 
+
+    def test_agregar_con_tramo_faltante_no_modifica_el_itinerario(self):
+        """Si falta un tramo, la solicitud no queda cargada ni se toca el estado."""
+        d, u1, _, matriz = _escenario_basico()
+        u_sin_tramo = Ubicacion("U99", "Isla", "")  # no esta en la matriz
+        it = _itinerario_con_furgoneta_grande(d, matriz)
+
+        s_ok = _solicitud_liviana("S1", u1, peso=2.0)
+        it.agregar(s_ok)
+        paradas_previas = it.paradas
+        distancia_previa = it.distancia_total
+
+        s_sin_ruta = _solicitud_liviana("S2", u_sin_tramo, peso=2.0)
+        with pytest.raises(RutaIncompleta):
+            it.agregar(s_sin_ruta)
+
+        assert it.paradas == paradas_previas
+        assert it.distancia_total == distancia_previa
+        assert s_sin_ruta.esta_asignada() is False
 
 # ============================================================
 # Quitar

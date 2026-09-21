@@ -37,9 +37,6 @@ class Itinerario:
     def carga_volumen(self) -> float:
         return sum(p.solicitud.volumen_total() for p in self._paradas)
 
-    def agregar(self, solicitud) -> None:
-        # Regla 7: si al recalcular queda no factible, revertir todo cambio.
-        pass
 
     def es_factible(self) -> bool:
         return self._transporte.admite_carga(self.carga_peso(), self.carga_volumen())
@@ -56,60 +53,59 @@ class Itinerario:
             self._distancia_total, self.carga_peso()
         )
         
-    def _recalcular_distancia(self):
-        if not self._paradas:
-            self._distancia_total = 0.0
-            return
+    def _calcular_distancia(self, paradas) -> float:
+        if not paradas:
+            return 0.0
         total = 0.0
         anterior = self._deposito
-        for p in self._paradas:
+        for p in paradas:
             total += self._matriz.distancia(anterior, p.solicitud.destino)
             anterior = p.solicitud.destino
-        # Vuelta al deposito
         total += self._matriz.distancia(anterior, self._deposito)
-        self._distancia_total = total
+        return total
 
     def agregar(self, solicitud):
-        # Guardar estado para poder revertir
-        paradas_prev = list(self._paradas)
-        distancia_prev = self._distancia_total
-
-        # Intentar agregar
-        nueva = Parada(len(self._paradas) + 1, solicitud, None)
-        self._paradas.append(nueva)
-        self._recalcular_distancia()
-
-        # Si no es factible, revertir y avisar
-        if not self.es_factible():
-            self._paradas = paradas_prev
-            self._distancia_total = distancia_prev
-            raise CapacidadExcedida(
-            f"La solicitud {solicitud.id} excede la capacidad del transporte"
-        )
-
+        propuesta = self._paradas + [Parada(len(self._paradas) + 1, solicitud, None)]
+        distancia = self._calcular_distancia(propuesta)   # puede lanzar RutaIncompleta
+        self._verificar_capacidad(propuesta)              # puede lanzar CapacidadExcedida
+        self._paradas = propuesta
+        self._distancia_total = distancia
         solicitud.marcar_como_asignada()
         
     def quitar(self, solicitud):
         parada = next((p for p in self._paradas if p.solicitud == solicitud), None)
         if parada is None:
             raise DatosInvalidos(f"La solicitud {solicitud.id} no esta en el itinerario")
-        self._paradas.remove(parada)
-        # Renumerar las paradas restantes
-        for i, p in enumerate(self._paradas):
+        propuesta = [p for p in self._paradas if p is not parada]
+        distancia = self._calcular_distancia(propuesta)
+        for i, p in enumerate(propuesta):
             p.orden = i + 1
-        self._recalcular_distancia()
+        self._paradas = propuesta
+        self._distancia_total = distancia
         solicitud.desmarcar_como_asignada()
-        
+
+
     def reordenar(self, secuencia):
-        # Verificar que la secuencia tenga las mismas solicitudes
         actuales = {p.solicitud for p in self._paradas}
         nuevas = set(secuencia)
         if actuales != nuevas:
             raise DatosInvalidos("La secuencia debe contener las mismas solicitudes del itinerario")
-        # Reordenar las paradas segun la secuencia
         mapa = {p.solicitud: p for p in self._paradas}
-        self._paradas = [mapa[s] for s in secuencia]
-        for i, p in enumerate(self._paradas):
+        propuesta = [mapa[s] for s in secuencia]
+        distancia = self._calcular_distancia(propuesta)
+        for i, p in enumerate(propuesta):
             p.orden = i + 1
-        self._recalcular_distancia()
+        self._paradas = propuesta
+        self._distancia_total = distancia
 
+        
+    def _verificar_capacidad(self, paradas) -> None:
+        peso = sum(p.solicitud.peso_total() for p in paradas)
+        volumen = sum(p.solicitud.volumen_total() for p in paradas)
+        if not self._transporte.admite_carga(peso, volumen):
+            raise CapacidadExcedida(
+                "La solicitud excede la capacidad del transporte"
+            )
+
+
+        
