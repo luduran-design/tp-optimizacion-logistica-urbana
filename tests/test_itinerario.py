@@ -4,7 +4,7 @@ import pytest
 
 from modelado import (
     Itinerario, MatrizDistancias, Deposito, Ubicacion, Ventana, Solicitud,
-    Articulo, Furgoneta, DatosInvalidos, CapacidadExcedida, RutaIncompleta
+    Articulo, Furgoneta, DatosInvalidos, CapacidadExcedida, RutaIncompleta,
 )
 
 
@@ -123,7 +123,6 @@ class TestAgregarSolicitud:
         assert it.distancia_total == distancia_previa
         assert s_pesada.esta_asignada() is False
 
-
     def test_agregar_con_tramo_faltante_no_modifica_el_itinerario(self):
         """Si falta un tramo, la solicitud no queda cargada ni se toca el estado."""
         d, u1, _, matriz = _escenario_basico()
@@ -142,6 +141,47 @@ class TestAgregarSolicitud:
         assert it.paradas == paradas_previas
         assert it.distancia_total == distancia_previa
         assert s_sin_ruta.esta_asignada() is False
+
+
+# ============================================================
+# Doble asignacion (regla 5)
+# ============================================================
+
+class TestDobleAsignacion:
+    def test_agregar_solicitud_ya_en_este_itinerario_lanza_error(self):
+        d, u1, _, matriz = _escenario_basico()
+        it = _itinerario_con_furgoneta_grande(d, matriz)
+        s = _solicitud_liviana("S1", u1, peso=2.0)
+        it.agregar(s)
+        with pytest.raises(DatosInvalidos):
+            it.agregar(s)
+
+    def test_agregar_solicitud_asignada_externamente_lanza_error(self):
+        # Simulamos que la solicitud ya vive en otro viaje: la marcamos a mano.
+        d, u1, _, matriz = _escenario_basico()
+        it = _itinerario_con_furgoneta_grande(d, matriz)
+        s = _solicitud_liviana("S1", u1, peso=2.0)
+        s.marcar_como_asignada()
+        with pytest.raises(DatosInvalidos):
+            it.agregar(s)
+
+    def test_estado_no_cambia_si_falla_por_doble_asignacion(self):
+        # Si el chequeo la rechaza, no se toca ni distancia ni paradas.
+        d, u1, u2, matriz = _escenario_basico()
+        it = _itinerario_con_furgoneta_grande(d, matriz)
+        s1 = _solicitud_liviana("S1", u1, peso=2.0)
+        it.agregar(s1)
+        paradas_previas = it.paradas
+        distancia_previa = it.distancia_total
+
+        s_repetida = _solicitud_liviana("S2", u2, peso=2.0)
+        s_repetida.marcar_como_asignada()  # simula estar en otro viaje
+        with pytest.raises(DatosInvalidos):
+            it.agregar(s_repetida)
+
+        assert it.paradas == paradas_previas
+        assert it.distancia_total == distancia_previa
+
 
 # ============================================================
 # Quitar

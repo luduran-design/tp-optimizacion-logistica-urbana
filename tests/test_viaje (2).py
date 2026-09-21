@@ -136,6 +136,47 @@ class TestPrecondicionesTransicion:
 
 
 # ============================================================
+# Doble asignacion entre viajes (regla 5)
+# ============================================================
+
+class TestDobleAsignacionEntreViajes:
+    def test_no_se_puede_agregar_misma_solicitud_a_dos_viajes(self):
+        """Regla 5: una solicitud no puede pertenecer a dos viajes activos."""
+        # Armamos dos viajes independientes que comparten matriz y deposito.
+        d, u1, _, matriz = _matriz_completa()
+        f1 = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
+        f2 = Furgoneta("F2", 1000, 5.0, 60, 200, 50, 0.27)
+        v1 = Viaje("V1", "2026-09-07", f1, d, matriz, 8)
+        v2 = Viaje("V2", "2026-09-07", f2, d, matriz, 8)
+
+        s = _solicitud("S1", u1, peso=2.0)
+        v1.agregar_solicitud(s)
+        assert s.esta_asignada() is True
+
+        # El segundo viaje debe rechazarla porque ya esta en V1.
+        with pytest.raises(DatosInvalidos):
+            v2.agregar_solicitud(s)
+
+        # V2 no debe haber quedado con la solicitud adentro.
+        assert v2.paradas == []
+
+    def test_no_se_puede_agregar_solicitud_ya_entregada_a_otro_viaje(self):
+        """Regla 5: una solicitud entregada no puede volver a planificarse."""
+        # Primer viaje: agrega, entrega y finaliza.
+        v1 = _viaje_finalizado()
+        s_entregada = v1.paradas[0].solicitud
+        assert s_entregada.esta_asignada() is True  # el flag queda en True a proposito
+
+        # Segundo viaje independiente: no debe aceptarla.
+        d, u1, _, matriz = _matriz_completa()
+        f = Furgoneta("F2", 1000, 5.0, 60, 200, 50, 0.27)
+        v2 = Viaje("V2", "2026-09-07", f, d, matriz, 8)
+        with pytest.raises(DatosInvalidos):
+            v2.agregar_solicitud(s_entregada)
+        assert v2.paradas == []
+
+
+# ============================================================
 # Composicion con Itinerario
 # ============================================================
 
@@ -426,5 +467,3 @@ class TestResumen:
         r1["estado"] = "ROTO"
         r2 = v.resumen()
         assert r2["estado"] == "PLANIFICADO"
-
-        

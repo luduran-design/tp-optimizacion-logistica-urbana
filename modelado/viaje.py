@@ -101,6 +101,12 @@ class Viaje:
             raise TransicionIlegal(
                 "No se puede finalizar: hay paradas sin resultado"
             )
+        # Decision de diseno (regla 5): al finalizar NO se llama a
+        # solicitud.desmarcar_como_asignada() sobre las paradas entregadas.
+        # El flag _asignada queda en True para siempre, de modo que un intento
+        # posterior de agregar la solicitud a otro viaje sea rechazado por
+        # Itinerario.agregar(). "Una solicitud entregada no puede volver a
+        # planificarse" queda garantizado por esta invariante.
         self._estado = EstadoViaje.FINALIZADO
 
     def recorrer(self):
@@ -159,6 +165,3 @@ class Viaje:
             "incidentes": len(self._incidentes),
         }
 
-
-
-    
