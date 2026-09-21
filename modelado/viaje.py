@@ -61,25 +61,34 @@ class Viaje:
     def impacto_ambiental(self) -> float:
         return self._itinerario.impacto()
 
+    # --- Guardia de estado compartida (reglas 10 y 12) ---
+    def _exigir_planificado(self, accion: str) -> None:
+        if self._estado != EstadoViaje.PLANIFICADO:
+            raise TransicionIlegal(
+                f"No se puede {accion} un viaje en estado {self._estado.value}"
+            )
+
     def agregar_solicitud(self, solicitud):
+        self._exigir_planificado("agregar solicitudes a")
         self._itinerario.agregar(solicitud)
 
     def quitar_solicitud(self, solicitud):
-        if self._estado != EstadoViaje.PLANIFICADO:
-            raise TransicionIlegal("Solo se pueden quitar solicitudes en estado PLANIFICADO")
+        self._exigir_planificado("quitar solicitudes de")
         self._itinerario.quitar(solicitud)
 
     def reordenar(self, secuencia):
-        if self._estado != EstadoViaje.PLANIFICADO:
-            raise TransicionIlegal("Solo se puede reordenar en estado PLANIFICADO")
+        self._exigir_planificado("reordenar")
         self._itinerario.reordenar(secuencia)
 
     # --- Maquina de estados (regla 10) ---
 
     def iniciar(self):
-        if self._estado != EstadoViaje.PLANIFICADO:
+        self._exigir_planificado("iniciar")
+        if not self._itinerario.paradas:
+            raise TransicionIlegal("No se puede iniciar un viaje sin paradas")
+        if not self.es_factible():
             raise TransicionIlegal(
-                f"No se puede iniciar un viaje en estado {self._estado.value}"
+                "No se puede iniciar un viaje con itinerario no factible"
             )
         self._estado = EstadoViaje.EN_CURSO
 
@@ -87,6 +96,10 @@ class Viaje:
         if self._estado != EstadoViaje.EN_CURSO:
             raise TransicionIlegal(
                 f"No se puede finalizar un viaje en estado {self._estado.value}"
+            )
+        if not self.esta_completo():
+            raise TransicionIlegal(
+                "No se puede finalizar: hay paradas sin resultado"
             )
         self._estado = EstadoViaje.FINALIZADO
 
@@ -145,5 +158,7 @@ class Viaje:
             "entregas": len(self._comprobantes),
             "incidentes": len(self._incidentes),
         }
+
+
 
     

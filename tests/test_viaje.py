@@ -46,6 +46,16 @@ def _viaje_con_solicitudes(cantidad=2):
     return viaje, solicitudes
 
 
+def _viaje_finalizado():
+    """Arma un viaje que ya paso por PLANIFICADO -> EN_CURSO -> FINALIZADO
+    con una solicitud entregada, para usar en tests que necesitan estado FINALIZADO."""
+    viaje, [s1] = _viaje_con_solicitudes(1)
+    viaje.iniciar()
+    viaje.registrar_entrega(s1, "Juan", 30)
+    viaje.finalizar()
+    return viaje
+
+
 # ============================================================
 # Enum de estado
 # ============================================================
@@ -66,32 +76,63 @@ class TestEstadoViaje_Maquina:
         assert _make_viaje_planificado().estado == EstadoViaje.PLANIFICADO
 
     def test_iniciar_pasa_a_en_curso(self):
-        v = _make_viaje_planificado()
-        v.iniciar()
-        assert v.estado == EstadoViaje.EN_CURSO
+        viaje, _ = _viaje_con_solicitudes(1)
+        viaje.iniciar()
+        assert viaje.estado == EstadoViaje.EN_CURSO
 
     def test_iniciar_dos_veces_lanza_error(self):
-        v = _make_viaje_planificado()
-        v.iniciar()
+        viaje, _ = _viaje_con_solicitudes(1)
+        viaje.iniciar()
         with pytest.raises(TransicionIlegal):
-            v.iniciar()
+            viaje.iniciar()
 
     def test_finalizar_desde_planificado_lanza_error(self):
         with pytest.raises(TransicionIlegal):
             _make_viaje_planificado().finalizar()
 
     def test_ciclo_completo_planificado_encurso_finalizado(self):
-        v = _make_viaje_planificado()
-        v.iniciar()
-        v.finalizar()
-        assert v.estado == EstadoViaje.FINALIZADO
+        viaje, [s1] = _viaje_con_solicitudes(1)
+        viaje.iniciar()
+        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.finalizar()
+        assert viaje.estado == EstadoViaje.FINALIZADO
 
     def test_finalizar_dos_veces_lanza_error(self):
-        v = _make_viaje_planificado()
-        v.iniciar()
-        v.finalizar()
+        viaje = _viaje_finalizado()
         with pytest.raises(TransicionIlegal):
-            v.finalizar()
+            viaje.finalizar()
+
+
+# ============================================================
+# Precondiciones de transicion (reglas 10 y 12)
+# ============================================================
+
+class TestPrecondicionesTransicion:
+    def test_agregar_solicitud_en_en_curso_lanza_error(self):
+        viaje, [s1] = _viaje_con_solicitudes(1)
+        viaje.iniciar()
+        _, _, u2, _ = _matriz_completa()
+        s_nueva = _solicitud("S99", u2, peso=2.0)
+        with pytest.raises(TransicionIlegal):
+            viaje.agregar_solicitud(s_nueva)
+
+    def test_agregar_solicitud_en_finalizado_lanza_error(self):
+        viaje = _viaje_finalizado()
+        _, u1, _, _ = _matriz_completa()
+        s_nueva = _solicitud("S99", u1, peso=2.0)
+        with pytest.raises(TransicionIlegal):
+            viaje.agregar_solicitud(s_nueva)
+
+    def test_iniciar_sin_paradas_lanza_error(self):
+        v = _make_viaje_planificado()
+        with pytest.raises(TransicionIlegal):
+            v.iniciar()
+
+    def test_finalizar_con_paradas_pendientes_lanza_error(self):
+        viaje, _ = _viaje_con_solicitudes(2)
+        viaje.iniciar()
+        with pytest.raises(TransicionIlegal):
+            viaje.finalizar()
 
 
 # ============================================================
@@ -139,10 +180,7 @@ class TestQuitarSolicitud:
             viaje.quitar_solicitud(s1)
 
     def test_quitar_en_finalizado_lanza_error(self):
-        # Armamos un viaje sin solicitudes para poder pasar por EN_CURSO -> FINALIZADO
-        viaje = _make_viaje_planificado()
-        viaje.iniciar()
-        viaje.finalizar()
+        viaje = _viaje_finalizado()
         s_cualquiera = _solicitud("SX", Ubicacion("UX", "x", ""))
         with pytest.raises(TransicionIlegal):
             viaje.quitar_solicitud(s_cualquiera)
@@ -165,9 +203,7 @@ class TestReordenarViaje:
             viaje.reordenar([s2, s1])
 
     def test_reordenar_en_finalizado_lanza_error(self):
-        viaje = _make_viaje_planificado()
-        viaje.iniciar()
-        viaje.finalizar()
+        viaje = _viaje_finalizado()
         with pytest.raises(TransicionIlegal):
             viaje.reordenar([])
 
@@ -241,9 +277,9 @@ class TestRecorrer:
         assert viaje.estado == EstadoViaje.EN_CURSO
 
     def test_recorrer_desde_en_curso_completo_pasa_a_finalizado(self):
-        # Un viaje vacio esta "completo" desde el arranque.
-        viaje = _make_viaje_planificado()
-        viaje.iniciar()  # PLANIFICADO -> EN_CURSO
+        viaje, [s1] = _viaje_con_solicitudes(1)
+        viaje.iniciar()
+        viaje.registrar_entrega(s1, "Juan", 30)
         viaje.recorrer()  # EN_CURSO + completo -> FINALIZADO
         assert viaje.estado == EstadoViaje.FINALIZADO
 
@@ -254,9 +290,7 @@ class TestRecorrer:
         assert viaje.estado == EstadoViaje.EN_CURSO
 
     def test_recorrer_desde_finalizado_no_hace_nada(self):
-        viaje = _make_viaje_planificado()
-        viaje.iniciar()
-        viaje.finalizar()
+        viaje = _viaje_finalizado()
         viaje.recorrer()  # no debe lanzar error ni cambiar estado
         assert viaje.estado == EstadoViaje.FINALIZADO
 
@@ -287,9 +321,7 @@ class TestRegistrarEntrega:
             viaje.registrar_entrega(s1, "Juan", 30)
 
     def test_registrar_entrega_en_finalizado_lanza_error(self):
-        viaje = _make_viaje_planificado()
-        viaje.iniciar()
-        viaje.finalizar()
+        viaje = _viaje_finalizado()
         s = _solicitud("SX", Ubicacion("UX", "x", ""))
         with pytest.raises(TransicionIlegal):
             viaje.registrar_entrega(s, "Juan", 30)
@@ -330,9 +362,7 @@ class TestRegistrarFallo:
             viaje.registrar_fallo(s1, self._incidente())
 
     def test_registrar_fallo_en_finalizado_lanza_error(self):
-        viaje = _make_viaje_planificado()
-        viaje.iniciar()
-        viaje.finalizar()
+        viaje = _viaje_finalizado()
         s = _solicitud("SX", Ubicacion("UX", "x", ""))
         with pytest.raises(TransicionIlegal):
             viaje.registrar_fallo(s, self._incidente())
@@ -376,10 +406,10 @@ class TestResumen:
         assert claves.issubset(r.keys())
 
     def test_resumen_refleja_el_estado_actual(self):
-        v = _make_viaje_planificado()
-        assert v.resumen()["estado"] == "PLANIFICADO"
-        v.iniciar()
-        assert v.resumen()["estado"] == "EN_CURSO"
+        viaje, _ = _viaje_con_solicitudes(1)
+        assert viaje.resumen()["estado"] == "PLANIFICADO"
+        viaje.iniciar()
+        assert viaje.resumen()["estado"] == "EN_CURSO"
 
     def test_resumen_cuenta_paradas_y_entregas(self):
         viaje, [s1, _] = _viaje_con_solicitudes(2)
@@ -396,3 +426,5 @@ class TestResumen:
         r1["estado"] = "ROTO"
         r2 = v.resumen()
         assert r2["estado"] == "PLANIFICADO"
+
+        
