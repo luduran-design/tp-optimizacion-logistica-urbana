@@ -1,4 +1,4 @@
-"""Tests de la jerarquia de Transporte: polimorfismo, validaciones, tiempo, costo."""
+"""Tests de la jerarquia de Transporte: polimorfismo, validaciones, tiempo, costo, inmutabilidad."""
 
 import pytest
 
@@ -46,7 +46,6 @@ class TestTiempoDeTramo:
 
     def test_tiempo_proporcional_a_distancia(self):
         _, f, _ = _make_transportes()  # velocidad_media = 60
-        # 60 km / 60 km/h = 1 hora
         assert f.tiempo_de_tramo(60) == pytest.approx(1.0)
 
     def test_tiempo_cero_para_distancia_cero(self):
@@ -54,24 +53,21 @@ class TestTiempoDeTramo:
         assert f.tiempo_de_tramo(0) == 0
 
     def test_tiempo_se_calcula_igual_en_todos_los_subtipos(self):
-        # No es abstracto: la formula es la misma para moto, furgoneta y camion.
-        m, f, c = _make_transportes()  # Todos tienen velocidad distinta
-        assert m.tiempo_de_tramo(40) == pytest.approx(1.0)  # 40 km / 40 km/h
-        assert f.tiempo_de_tramo(60) == pytest.approx(1.0)  # 60 km / 60 km/h
-        assert c.tiempo_de_tramo(50) == pytest.approx(1.0)  # 50 km / 50 km/h
+        m, f, c = _make_transportes()
+        assert m.tiempo_de_tramo(40) == pytest.approx(1.0)
+        assert f.tiempo_de_tramo(60) == pytest.approx(1.0)
+        assert c.tiempo_de_tramo(50) == pytest.approx(1.0)
 
 
 class TestCalcularCosto:
     """calcular_costo(km, paradas) = km * costo_por_km + paradas * costo_por_parada."""
 
     def test_costo_es_suma_de_km_mas_paradas(self):
-        _, f, _ = _make_transportes()  # costo_por_km=200, costo_por_parada=50
-        # 10 km * 200 + 3 paradas * 50 = 2000 + 150 = 2150
+        _, f, _ = _make_transportes()
         assert f.calcular_costo(10, 3) == pytest.approx(2150.0)
 
     def test_costo_sin_paradas_es_solo_kilometros(self):
         _, f, _ = _make_transportes()
-        # 5 km * 200 = 1000
         assert f.calcular_costo(5, 0) == pytest.approx(1000.0)
 
     def test_costo_cero_km_cero_paradas_es_cero(self):
@@ -79,9 +75,7 @@ class TestCalcularCosto:
         assert f.calcular_costo(0, 0) == 0
 
     def test_costo_varia_por_transporte(self):
-        # Cada subtipo tiene sus propios costos, la formula usa los del propio objeto.
         m, f, c = _make_transportes()
-        # moto: 100*10 + 50*2 = 1100; furgoneta: 200*10 + 50*2 = 2100; camion: 500*10 + 100*2 = 5200
         assert m.calcular_costo(10, 2) == pytest.approx(1100.0)
         assert f.calcular_costo(10, 2) == pytest.approx(2100.0)
         assert c.calcular_costo(10, 2) == pytest.approx(5200.0)
@@ -133,3 +127,40 @@ class TestValidacionTransporte:
     def test_factor_ambiental_cero_es_valido(self):
         f = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0)
         assert f.factor_ambiental == 0
+
+
+class TestInmutabilidadTransporte:
+    """Todas las capacidades, velocidad, costos y factor ambiental son de solo
+    lectura desde afuera: se validan una vez en __init__ y no se pueden violar."""
+
+    def _furgoneta(self):
+        return Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
+
+    def test_no_se_puede_reasignar_id(self):
+        with pytest.raises(AttributeError):
+            self._furgoneta().id = "F99"
+
+    def test_no_se_puede_reasignar_capacidad_peso(self):
+        # El ataque del issue: bajarle la capacidad para "hacer entrar" carga.
+        with pytest.raises(AttributeError):
+            self._furgoneta().capacidad_peso = -5
+
+    def test_no_se_puede_reasignar_capacidad_volumen(self):
+        with pytest.raises(AttributeError):
+            self._furgoneta().capacidad_volumen = 999
+
+    def test_no_se_puede_reasignar_velocidad_media(self):
+        with pytest.raises(AttributeError):
+            self._furgoneta().velocidad_media = 0
+
+    def test_no_se_puede_reasignar_costo_por_km(self):
+        with pytest.raises(AttributeError):
+            self._furgoneta().costo_por_km = -1
+
+    def test_no_se_puede_reasignar_costo_por_parada(self):
+        with pytest.raises(AttributeError):
+            self._furgoneta().costo_por_parada = -1
+
+    def test_no_se_puede_reasignar_factor_ambiental(self):
+        with pytest.raises(AttributeError):
+            self._furgoneta().factor_ambiental = -1

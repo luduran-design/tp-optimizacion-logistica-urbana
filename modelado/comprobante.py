@@ -4,8 +4,9 @@ from modelado.excepciones import DatosInvalidos
 class Comprobante:
     """Comprobante de entrega: registra quien recibio una solicitud, cuando, y bajo que numero.
 
-    Es un objeto de datos del dominio: valida sus propios campos en el __init__
-    y una vez construido queda inmutable en la practica (no expone setters).
+    Es un objeto de datos del dominio: valida sus campos en el __init__ y una
+    vez construido queda inmutable (todos los atributos son properties de solo
+    lectura).
     """
 
     def __init__(self, nro, solicitud, fecha_hora_real, receptor):
@@ -21,7 +22,23 @@ class Comprobante:
             raise DatosInvalidos(
                 "El receptor del comprobante no puede estar vacio"
             )
-        self.nro = nro
-        self.solicitud = solicitud
-        self.fecha_hora_real = fecha_hora_real
-        self.receptor = receptor
+        self._nro = nro
+        self._solicitud = solicitud
+        self._fecha_hora_real = fecha_hora_real
+        self._receptor = receptor
+
+    @property
+    def nro(self):
+        return self._nro
+
+    @property
+    def solicitud(self):
+        return self._solicitud
+
+    @property
+    def fecha_hora_real(self):
+        return self._fecha_hora_real
+
+    @property
+    def receptor(self):
+        return self._receptor

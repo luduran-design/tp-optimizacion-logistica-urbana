@@ -5,23 +5,60 @@ from modelado.excepciones import TransicionIlegal
 class Parada:
     """Parada de un itinerario: una solicitud a entregar en un orden dado.
 
-    Arranca en estado PENDIENTE. Termina como ENTREGADA (guardando quien recibio
-    y cuando) o FALLIDA (guardando el incidente). Una vez fuera de PENDIENTE, no
-    se puede volver atras.
+    El estado (resultado, receptor, fecha_hora_real, incidente) es privado y solo
+    se puede modificar a traves de entregar() o marcar_fallida(). El orden dentro
+    del itinerario se cambia con actualizar_orden(), llamado por Itinerario cuando
+    reordena o quita paradas.
     """
 
     def __init__(self, orden, solicitud, llegada_prevista):
-        self.orden = orden
-        self.solicitud = solicitud
-        self.llegada_prevista = llegada_prevista
-        self.resultado = ResultadoParada.PENDIENTE
+        self._orden = orden
+        self._solicitud = solicitud
+        self._llegada_prevista = llegada_prevista
+        self._resultado = ResultadoParada.PENDIENTE
         # Se completan al cerrar la parada (entregar o marcar_fallida)
-        self.receptor = None
-        self.fecha_hora_real = None
-        self.incidente = None
+        self._receptor = None
+        self._fecha_hora_real = None
+        self._incidente = None
+
+    @property
+    def orden(self):
+        return self._orden
+
+    @property
+    def solicitud(self):
+        return self._solicitud
+
+    @property
+    def llegada_prevista(self):
+        return self._llegada_prevista
+
+    @property
+    def resultado(self) -> ResultadoParada:
+        return self._resultado
+
+    @property
+    def receptor(self):
+        return self._receptor
+
+    @property
+    def fecha_hora_real(self):
+        return self._fecha_hora_real
+
+    @property
+    def incidente(self):
+        return self._incidente
+
+    def actualizar_orden(self, nuevo_orden) -> None:
+        """Reasigna la posicion de la parada dentro del itinerario.
+
+        Es la unica via legitima para cambiar el orden desde afuera. Solo tiene
+        sentido llamarla desde Itinerario cuando reordena o quita paradas.
+        """
+        self._orden = nuevo_orden
 
     def esta_pendiente(self) -> bool:
-        return self.resultado == ResultadoParada.PENDIENTE
+        return self._resultado == ResultadoParada.PENDIENTE
 
     def entregar(self, receptor, fecha_hora) -> None:
         """Cierra la parada como ENTREGADA y registra quien recibio y cuando.
@@ -31,9 +68,9 @@ class Parada:
         """
         if not self.esta_pendiente():
             raise TransicionIlegal("Solo se puede entregar una parada pendiente")
-        self.resultado = ResultadoParada.ENTREGADA
-        self.receptor = receptor
-        self.fecha_hora_real = fecha_hora
+        self._resultado = ResultadoParada.ENTREGADA
+        self._receptor = receptor
+        self._fecha_hora_real = fecha_hora
 
     def marcar_fallida(self, incidente) -> None:
         """Cierra la parada como FALLIDA y guarda el incidente que la motivo."""
@@ -41,5 +78,5 @@ class Parada:
             raise TransicionIlegal(
                 "Solo se puede marcar como fallida una parada pendiente"
             )
-        self.resultado = ResultadoParada.FALLIDA
-        self.incidente = incidente
+        self._resultado = ResultadoParada.FALLIDA
+        self._incidente = incidente

@@ -2,6 +2,11 @@ from modelado.excepciones import DatosInvalidos
 
 
 class Articulo:
+    """Unidad de carga: un producto identificado por id, con peso y volumen positivos.
+
+    Todos sus atributos son inmutables desde afuera (properties de solo lectura):
+    las invariantes se validan una vez en el __init__ y no pueden violarse despues.
+    """
 
     def __init__(self, id, nombre, peso, volumen):
         if not id:
@@ -12,18 +17,34 @@ class Articulo:
             raise DatosInvalidos("El peso del articulo debe ser positivo")
         if volumen <= 0:
             raise DatosInvalidos("El volumen del articulo debe ser positivo")
-        self.id = id
-        self.nombre = nombre
-        self.peso = peso
-        self.volumen = volumen
+        self._id = id
+        self._nombre = nombre
+        self._peso = peso
+        self._volumen = volumen
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def nombre(self):
+        return self._nombre
+
+    @property
+    def peso(self):
+        return self._peso
+
+    @property
+    def volumen(self):
+        return self._volumen
 
     def __eq__(self, otro):
         if not isinstance(otro, Articulo):
             return NotImplemented
-        return self.id == otro.id
+        return self._id == otro._id
 
     def __hash__(self):
-        return hash(self.id)
+        return hash(self._id)
 
     def __repr__(self):
-        return f"Articulo('{self.id}')"
+        return f"Articulo('{self._id}')"

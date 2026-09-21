@@ -37,3 +37,22 @@ class TestValidacionUbicacion:
         # La descripcion SI puede quedar vacia, no lanza error.
         u = Ubicacion("U1", "Palermo", "")
         assert u.descripcion == ""
+
+
+class TestInmutabilidadUbicacion:
+    """id, nombre y descripcion son de solo lectura desde afuera."""
+
+    def test_no_se_puede_reasignar_id(self):
+        u = Ubicacion("U1", "Palermo", "")
+        with pytest.raises(AttributeError):
+            u.id = "U99"
+
+    def test_no_se_puede_reasignar_nombre(self):
+        u = Ubicacion("U1", "Palermo", "")
+        with pytest.raises(AttributeError):
+            u.nombre = "Belgrano"
+
+    def test_no_se_puede_reasignar_descripcion(self):
+        u = Ubicacion("U1", "Palermo", "sucursal centro")
+        with pytest.raises(AttributeError):
+            u.descripcion = "otra"

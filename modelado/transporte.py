@@ -6,8 +6,13 @@ from modelado.excepciones import DatosInvalidos
 
 
 class Transporte(ABC):
-    # Transporte es abstracta (ABC): "un transporte" a secas no existe, siempre es Moto,
-    # Furgoneta o Camion. No se puede instanciar sola.
+    """Clase abstracta: define el contrato comun para Motocicleta, Furgoneta y Camion.
+
+    Todos sus atributos son inmutables desde afuera: las capacidades, velocidad,
+    costos y factor ambiental se validan en el __init__ y no pueden reasignarse
+    despues.
+    """
+
     def __init__(self, id, capacidad_peso, capacidad_volumen, velocidad_media,
                  costo_por_km, costo_por_parada, factor_ambiental):
         if not id:
@@ -25,24 +30,52 @@ class Transporte(ABC):
             raise DatosInvalidos("El costo por parada no puede ser negativo")
         if factor_ambiental < 0:
             raise DatosInvalidos("El factor ambiental no puede ser negativo")
-        self.id = id
-        self.capacidad_peso = capacidad_peso
-        self.capacidad_volumen = capacidad_volumen
-        self.velocidad_media = velocidad_media
-        self.costo_por_km = costo_por_km
-        self.costo_por_parada = costo_por_parada
-        self.factor_ambiental = factor_ambiental
+        self._id = id
+        self._capacidad_peso = capacidad_peso
+        self._capacidad_volumen = capacidad_volumen
+        self._velocidad_media = velocidad_media
+        self._costo_por_km = costo_por_km
+        self._costo_por_parada = costo_por_parada
+        self._factor_ambiental = factor_ambiental
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def capacidad_peso(self):
+        return self._capacidad_peso
+
+    @property
+    def capacidad_volumen(self):
+        return self._capacidad_volumen
+
+    @property
+    def velocidad_media(self):
+        return self._velocidad_media
+
+    @property
+    def costo_por_km(self):
+        return self._costo_por_km
+
+    @property
+    def costo_por_parada(self):
+        return self._costo_por_parada
+
+    @property
+    def factor_ambiental(self):
+        return self._factor_ambiental
 
     def __eq__(self, otro):
         if not isinstance(otro, Transporte):
             return NotImplemented
-        return self.id == otro.id
+        return self._id == otro._id
 
     def __hash__(self):
-        return hash(self.id)
+        return hash(self._id)
 
     def __repr__(self):
-        return f"Transporte('{self.id}')"
+        return f"Transporte('{self._id}')"
 
     # Abstracto: cada subtipo DEBE definir su propia formula de impacto (regla 9).
     @abstractmethod
@@ -54,10 +87,10 @@ class Transporte(ABC):
     # Estos 3 metodos NO son abstractos: son iguales para todos los transportes, se implementan aca
     # una sola vez y las subclases los heredan.
     def tiempo_de_tramo(self, kilometros):
-        return kilometros / self.velocidad_media
+        return kilometros / self._velocidad_media
 
     def admite_carga(self, peso, volumen):
-        return peso <= self.capacidad_peso and volumen <= self.capacidad_volumen
+        return peso <= self._capacidad_peso and volumen <= self._capacidad_volumen
 
     def calcular_costo(self, kilometros, cantidad_paradas):
-        return kilometros * self.costo_por_km + cantidad_paradas * self.costo_por_parada
+        return kilometros * self._costo_por_km + cantidad_paradas * self._costo_por_parada

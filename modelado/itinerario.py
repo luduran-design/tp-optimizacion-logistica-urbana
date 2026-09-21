@@ -129,7 +129,7 @@ class Itinerario:
         propuesta = [p for p in self._paradas if p is not parada]
         distancia = self._calcular_distancia(propuesta)
         for i, p in enumerate(propuesta):
-            p.orden = i + 1
+            p.actualizar_orden(i + 1)
         self._paradas = propuesta
         self._distancia_total = distancia
         solicitud.desmarcar_como_asignada()
@@ -154,6 +154,6 @@ class Itinerario:
         propuesta = [mapa[s] for s in secuencia]
         distancia = self._calcular_distancia(propuesta)
         for i, p in enumerate(propuesta):
-            p.orden = i + 1
+            p.actualizar_orden(i + 1)
         self._paradas = propuesta
         self._distancia_total = distancia

@@ -1,4 +1,4 @@
-"""Tests de Comprobante: validaciones en __init__ y guardado de atributos."""
+"""Tests de Comprobante: validaciones en __init__, guardado de atributos, inmutabilidad."""
 
 import pytest
 
@@ -43,3 +43,30 @@ class TestConstruccionComprobante:
         assert c.solicitud == s
         assert c.fecha_hora_real == 30
         assert c.receptor == "Juan"
+
+
+class TestInmutabilidadComprobante:
+    """Un comprobante es un registro contable: una vez emitido, no se toca."""
+
+    def _comprobante(self):
+        return Comprobante(1, _solicitud_basica(), 30, "Juan")
+
+    def test_no_se_puede_reasignar_nro(self):
+        c = self._comprobante()
+        with pytest.raises(AttributeError):
+            c.nro = 99
+
+    def test_no_se_puede_reasignar_receptor(self):
+        c = self._comprobante()
+        with pytest.raises(AttributeError):
+            c.receptor = "Otro"
+
+    def test_no_se_puede_reasignar_fecha_hora_real(self):
+        c = self._comprobante()
+        with pytest.raises(AttributeError):
+            c.fecha_hora_real = 999
+
+    def test_no_se_puede_reasignar_solicitud(self):
+        c = self._comprobante()
+        with pytest.raises(AttributeError):
+            c.solicitud = None

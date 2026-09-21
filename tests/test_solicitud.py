@@ -1,8 +1,8 @@
-"""Tests de Solicitud: comportamiento, validaciones, y delegacion a Ventana."""
+"""Tests de Solicitud: comportamiento, validaciones, delegacion a Ventana, inmutabilidad."""
 
 import pytest
 
-from modelado import Solicitud, Ubicacion, Ventana, DatosInvalidos
+from modelado import Solicitud, Ubicacion, Ventana, Articulo, DatosInvalidos
 from tests.helpers import _articulos_basicos, _solicitud_basica
 
 
@@ -82,3 +82,49 @@ class TestDelegacionAVentana:
     def test_espera_desde_dentro_arranca_al_toque(self):
         s = self._solicitud_con_ventana(10, 20)
         assert s.espera_desde(15) == 15
+
+
+class TestInmutabilidadSolicitud:
+    """id, destino, ventana y articulos son inmutables desde afuera. La lista
+    de articulos se devuelve como copia (regla 2)."""
+
+    def test_no_se_puede_reasignar_id(self):
+        s = _solicitud_basica()
+        with pytest.raises(AttributeError):
+            s.id = "S99"
+
+    def test_no_se_puede_reasignar_destino(self):
+        s = _solicitud_basica()
+        with pytest.raises(AttributeError):
+            s.destino = Ubicacion("U99", "otro", "")
+
+    def test_no_se_puede_reasignar_ventana(self):
+        s = _solicitud_basica()
+        with pytest.raises(AttributeError):
+            s.ventana = Ventana(0, 10)
+
+    def test_no_se_puede_reasignar_articulos(self):
+        s = _solicitud_basica()
+        with pytest.raises(AttributeError):
+            s.articulos = []
+
+    def test_mutar_articulos_devueltos_no_afecta_la_solicitud(self):
+        """El ataque literal del issue: intentar sumar carga a una solicitud
+        ya construida mutando la lista devuelta por la property."""
+        s = _solicitud_basica()
+        peso_original = s.peso_total()
+        volumen_original = s.volumen_total()
+        # La lista devuelta es copia: mutarla no cambia el interior.
+        s.articulos.append(Articulo("A99", "pesado", 5000, 50))
+        assert s.peso_total() == peso_original
+        assert s.volumen_total() == volumen_original
+
+    def test_mutar_articulos_originales_no_afecta_la_solicitud(self):
+        """Copia defensiva de entrada: si el que construyo la solicitud despues
+        muta la lista original, la solicitud no cambia."""
+        destino = Ubicacion("U1", "Palermo", "")
+        lista_original = _articulos_basicos()
+        s = Solicitud("S1", destino, Ventana(0, 100), lista_original)
+        peso_antes = s.peso_total()
+        lista_original.append(Articulo("A99", "pesado", 5000, 50))
+        assert s.peso_total() == peso_antes
