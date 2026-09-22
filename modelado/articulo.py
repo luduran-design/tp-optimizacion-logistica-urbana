@@ -13,11 +13,11 @@ class Articulo:
             raise DatosInvalidos("El id del articulo debe ser un texto no vacio.")
         if not isinstance(nombre, str) or not nombre.strip():
             raise DatosInvalidos("El nombre del articulo debe ser un texto no vacio.")
-        for valor in (peso, volumen):
+        for nombre_campo, valor in (("peso", peso), ("volumen", volumen)):
             if isinstance(valor, bool) or not isinstance(valor, (int, float)):
-                raise DatosInvalidos("Peso y volumen deben ser numeros.")
+                raise DatosInvalidos(f"El {nombre_campo} del articulo debe ser un numero.")
             if valor <= 0:
-                raise DatosInvalidos("Peso y volumen deben ser positivos.")
+                raise DatosInvalidos(f"El {nombre_campo} del articulo debe ser positivo.")
         self._id = id
         self._nombre = nombre
         self._peso = peso

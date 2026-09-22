@@ -3,9 +3,11 @@
 import pytest
 
 from modelado import (
-    Itinerario, MatrizDistancias, Deposito, Ubicacion, Ventana, Solicitud,
+    Itinerario, MatrizDistancias, Deposito, Ubicacion, Solicitud,
     Articulo, Furgoneta, DatosInvalidos, CapacidadExcedida, RutaIncompleta,
+    VentanaIncumplida,
 )
+from tests.helpers import _hora, _ventana, _ventana_amplia
 
 
 # ============================================================
@@ -31,19 +33,19 @@ def _escenario_basico():
 def _solicitud_liviana(id, destino, peso=1.0):
     """Solicitud con un articulo liviano, cabe en cualquier transporte razonable."""
     art = Articulo(f"A-{id}", "paquete", peso, 0.1)
-    return Solicitud(id, destino, Ventana(0, 100), [art])
+    return Solicitud(id, destino, _ventana_amplia(), [art])
 
 
 def _itinerario_con_furgoneta_grande(deposito, matriz):
     """Furgoneta con mucha capacidad: los tests que no la excedan no la excederan."""
     f = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
-    return Itinerario(deposito, hora_salida=8, matriz=matriz, transporte=f)
+    return Itinerario(deposito, hora_salida=_hora(8), matriz=matriz, transporte=f)
 
 
 def _itinerario_con_furgoneta_chica(deposito, matriz):
     """Furgoneta con capacidad de solo 10 kg: sirve para forzar CapacidadExcedida."""
     f = Furgoneta("F1", 10, 5.0, 60, 200, 50, 0.27)
-    return Itinerario(deposito, hora_salida=8, matriz=matriz, transporte=f)
+    return Itinerario(deposito, hora_salida=_hora(8), matriz=matriz, transporte=f)
 
 
 # ============================================================
@@ -345,3 +347,170 @@ class TestReordenarSinRepetidos:
         with pytest.raises(DatosInvalidos, match="Sobran"):
             it.reordenar([s1, ajena])
         assert [p.solicitud for p in it.paradas] == [s1, s2]
+
+
+# ============================================================
+# Regla 6: recorrido con horarios. Escenario = ejemplo de aceptacion del README.
+# ============================================================
+
+def _escenario_readme(ventana_s1=(9, 20, 10, 0), ventana_s2=(10, 0, 11, 0)):
+    """Furgoneta 500 kg / 8 m3 / 30 km/h / $2 por km / $5 por parada / 0.27 kg CO2 por km.
+    Sale a las 09:00. S1: 100 kg, 2 m3, a 15 km del deposito, ventana 09:20-10:00.
+    S2: 150 kg, 3 m3, a 10 km de S1, ventana 10:00-11:00, a 20 km del deposito."""
+    d = Deposito("D", "Deposito", "")
+    u1 = Ubicacion("U1", "Destino S1", "")
+    u2 = Ubicacion("U2", "Destino S2", "")
+    matriz = MatrizDistancias([d, u1, u2])
+    for a, b, km in [(d, u1, 15), (u1, u2, 10), (u2, d, 20),
+                     (u1, d, 25), (d, u2, 20), (u2, u1, 10)]:
+        matriz.agregar_tramo(a, b, km)
+    f = Furgoneta("F1", 500, 8, 30, 2, 5, 0.27)
+    it = Itinerario(d, hora_salida=_hora(9), matriz=matriz, transporte=f)
+    # Las ventanas vienen como (hora_ini, min_ini, hora_fin, min_fin).
+    h1, m1, h2, m2 = ventana_s1
+    h3, m3, h4, m4 = ventana_s2
+    s1 = Solicitud("S1", u1, _ventana(h1, h2, m1, m2), [Articulo("A1", "caja", 100, 2)])
+    s2 = Solicitud("S2", u2, _ventana(h3, h4, m3, m4), [Articulo("A2", "bulto", 150, 3)])
+    return it, s1, s2
+
+
+class TestRecorridoHorario:
+    """Los numeros del ejemplo de aceptacion del README, uno por uno."""
+
+    def test_llegadas_previstas_del_ejemplo(self):
+        it, s1, s2 = _escenario_readme()
+        it.agregar(s1)
+        it.agregar(s2)
+        # 15 km a 30 km/h = 30 min -> 09:30. Servicio hasta 09:40.
+        # 10 km = 20 min -> 10:00 (justo al inicio de la ventana de S2).
+        assert [p.llegada_prevista for p in it.paradas] == [_hora(9, 30), _hora(10, 0)]
+
+    def test_hora_de_regreso_al_deposito(self):
+        it, s1, s2 = _escenario_readme()
+        it.agregar(s1)
+        it.agregar(s2)
+        # Servicio en S2 hasta 10:10; 20 km = 40 min -> 10:50. Sin ventana.
+        assert it.hora_regreso == _hora(10, 50)
+
+    def test_distancia_costo_impacto_y_carga_del_ejemplo(self):
+        it, s1, s2 = _escenario_readme()
+        it.agregar(s1)
+        it.agregar(s2)
+        assert it.distancia_total == 45.0                       # 15 + 10 + 20
+        assert it.costo() == pytest.approx(100.0)                # 45*2 + 2*5
+        assert it.impacto() == pytest.approx(12.15)              # 45*0.27
+        assert it.carga_peso() == 250
+        assert it.carga_volumen() == 5
+
+    def test_sin_paradas_regresa_a_la_hora_de_salida(self):
+        it, _, _ = _escenario_readme()
+        assert it.hora_regreso == _hora(9)
+
+    def test_llegada_antes_del_inicio_espera_y_corre_lo_que_sigue(self):
+        # S1 abre 09:40: se llega 09:30, se espera, servicio 09:40-09:50.
+        # S2 se alcanza 10:10 (sigue dentro de 10:00-11:00). Regreso 11:00.
+        it, s1, s2 = _escenario_readme(ventana_s1=(9, 40, 10, 0))
+        it.agregar(s1)
+        it.agregar(s2)
+        assert it.paradas[0].llegada_prevista == _hora(9, 30)   # llegada real, no inicio de servicio
+        assert it.paradas[1].llegada_prevista == _hora(10, 10)
+        assert it.hora_regreso == _hora(11, 0)
+
+    def test_llegar_exactamente_al_fin_es_valido(self):
+        # Regla 6: fin inclusivo. S1 cierra 09:30 y se llega 09:30.
+        it, s1, _ = _escenario_readme(ventana_s1=(9, 0, 9, 30))
+        it.agregar(s1)
+        assert len(it.paradas) == 1
+
+    def test_llegar_un_minuto_tarde_se_rechaza(self):
+        it, s1, _ = _escenario_readme(ventana_s1=(9, 0, 9, 29))
+        with pytest.raises(VentanaIncumplida):
+            it.agregar(s1)
+        assert it.paradas == []
+
+
+class TestRechazoPorVentana:
+    """Regla 7: si el agregado o el reordenamiento incumple una ventana, el
+    itinerario queda exactamente como estaba."""
+
+    def test_agregar_s2_con_ventana_hasta_0955_se_rechaza_y_queda_solo_s1(self):
+        # El caso del README: "si la ventana de S2 terminara a 09:55, agregarla
+        # se rechazaria y el viaje conservaria unicamente S1".
+        it, s1, s2 = _escenario_readme(ventana_s2=(9, 0, 9, 55))
+        it.agregar(s1)
+        with pytest.raises(VentanaIncumplida):
+            it.agregar(s2)
+        assert [p.solicitud for p in it.paradas] == [s1]
+        assert it.distancia_total == 40.0                        # 15 ida + 25 vuelta
+        assert it.paradas[0].llegada_prevista == _hora(9, 30)
+        assert it.hora_regreso == _hora(10, 30)                  # 09:40 + 50 min
+        assert s2.esta_asignada() is False
+
+    def test_reordenar_inviable_no_cambia_nada(self):
+        # [S2, S1]: se llega a S2 09:40 y se espera a las 10:00; servicio hasta
+        # 10:10; 10 km -> S1 a las 10:30, con ventana cerrada a las 10:00.
+        it, s1, s2 = _escenario_readme()
+        it.agregar(s1)
+        it.agregar(s2)
+        with pytest.raises(VentanaIncumplida):
+            it.reordenar([s2, s1])
+        assert [p.solicitud for p in it.paradas] == [s1, s2]
+        assert [p.orden for p in it.paradas] == [1, 2]
+        assert [p.llegada_prevista for p in it.paradas] == [_hora(9, 30), _hora(10, 0)]
+        assert it.distancia_total == 45.0
+        assert it.hora_regreso == _hora(10, 50)
+
+    def test_quitar_recalcula_llegadas_y_regreso(self):
+        it, s1, s2 = _escenario_readme()
+        it.agregar(s1)
+        it.agregar(s2)
+        it.quitar(s1)
+        # Solo S2: 20 km -> 09:40, espera hasta 10:00, servicio hasta 10:10, 20 km -> 10:50.
+        assert it.paradas[0].llegada_prevista == _hora(9, 40)
+        assert it.paradas[0].orden == 1
+        assert it.distancia_total == 40.0
+        assert it.hora_regreso == _hora(10, 50)
+
+
+class TestCapacidadEnElLimite:
+    """Pruebas minimas: exceso solo de peso, solo de volumen y valores exactos."""
+
+    def _con_carga(self, peso, volumen):
+        it, _, _ = _escenario_readme()
+        u = Ubicacion("U1", "Destino S1", "")
+        s = Solicitud("SX", u, _ventana_amplia(), [Articulo("AX", "carga", peso, volumen)])
+        return it, s
+
+    def test_exactamente_en_capacidad_se_acepta(self):
+        it, s = self._con_carga(500, 8)
+        it.agregar(s)
+        assert it.es_factible() is True
+
+    def test_exceso_solo_de_peso_se_rechaza(self):
+        it, s = self._con_carga(501, 8)
+        with pytest.raises(CapacidadExcedida):
+            it.agregar(s)
+
+    def test_exceso_solo_de_volumen_se_rechaza(self):
+        it, s = self._con_carga(500, 8.1)
+        with pytest.raises(CapacidadExcedida):
+            it.agregar(s)
+
+
+class TestConsultasSinEfectos:
+    """Regla 12: costo, impacto y factibilidad no alteran el estado."""
+
+    def test_es_factible_costo_e_impacto_no_mutan(self):
+        it, s1, s2 = _escenario_readme()
+        it.agregar(s1)
+        it.agregar(s2)
+        antes = ([p.solicitud for p in it.paradas],
+                 [p.llegada_prevista for p in it.paradas],
+                 it.distancia_total, it.hora_regreso)
+        it.es_factible()
+        it.costo()
+        it.impacto()
+        despues = ([p.solicitud for p in it.paradas],
+                   [p.llegada_prevista for p in it.paradas],
+                   it.distancia_total, it.hora_regreso)
+        assert antes == despues

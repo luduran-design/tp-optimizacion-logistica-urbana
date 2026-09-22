@@ -17,7 +17,7 @@ class Comprobante:
         if solicitud is None:
             raise DatosInvalidos("El comprobante debe tener una solicitud")
         if not isinstance(fecha_hora_real, datetime):
-            raise DatosInvalidos("La fecha y hora del incidente debe ser un datetime")
+            raise DatosInvalidos("La fecha y hora real del comprobante debe ser un datetime")
         if not receptor:
             raise DatosInvalidos(
                 "El receptor del comprobante no puede estar vacio"

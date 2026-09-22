@@ -6,6 +6,7 @@ from modelado import (
     Empresa, Deposito, MatrizDistancias, Furgoneta, Viaje, EstadoViaje,
     DatosInvalidos,
 )
+from tests.helpers import _solicitud_basica, _hora
 
 
 class TestEmpresa:
@@ -30,14 +31,14 @@ class TestEmpresa:
     def test_crear_viaje_devuelve_viaje_planificado(self):
         e = self._empresa()
         t = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
-        v = e.crear_viaje("V1", "2026-09-07", t, 8)
+        v = e.crear_viaje("V1", "2026-09-07", t, _hora(8))
         assert isinstance(v, Viaje)
         assert v.estado == EstadoViaje.PLANIFICADO
 
     def test_crear_viaje_lo_guarda_en_viajes(self):
         e = self._empresa()
         t = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
-        v = e.crear_viaje("V1", "2026-09-07", t, 8)
+        v = e.crear_viaje("V1", "2026-09-07", t, _hora(8))
         assert v in e.viajes
 
     def test_solicitudes_pendientes_filtra_asignadas(self):
@@ -51,21 +52,21 @@ class TestEmpresa:
         assert s1 in pendientes
         assert s2 not in pendientes
 
-# --- Regla 1: ids de viaje no vacios y unicos dentro de la empresa ---
+    # --- Regla 1: ids de viaje no vacios y unicos dentro de la empresa ---
 
     def test_crear_viaje_con_id_vacio_lanza_error(self):
         e = self._empresa()
         t = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
         with pytest.raises(DatosInvalidos, match="id"):
-            e.crear_viaje("", "2026-09-07", t, 8)
+            e.crear_viaje("", "2026-09-07", t, _hora(8))
         assert e.viajes == []
 
     def test_crear_viaje_con_id_repetido_lanza_error(self):
         e = self._empresa()
         t = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
-        e.crear_viaje("V1", "2026-09-07", t, 8)
+        e.crear_viaje("V1", "2026-09-07", t, _hora(8))
         with pytest.raises(DatosInvalidos, match="V1"):
-            e.crear_viaje("V1", "2026-09-08", t, 9)
+            e.crear_viaje("V1", "2026-09-08", t, _hora(9))
         assert len(e.viajes) == 1
 
     def test_registrar_transporte_repetido_lanza_error(self):

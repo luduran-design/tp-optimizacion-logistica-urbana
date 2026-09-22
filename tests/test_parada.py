@@ -3,28 +3,29 @@
 import pytest
 
 from modelado import Parada, ResultadoParada, TransicionIlegal, Incidente, TipoIncidente
-from tests.helpers import _solicitud_basica
+from modelado import DatosInvalidos
+from tests.helpers import _solicitud_basica, _hora
 
 
 class TestConstruccionParada:
     def test_arranca_en_pendiente(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         assert p.resultado == ResultadoParada.PENDIENTE
 
     def test_esta_pendiente_true_al_arranque(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         assert p.esta_pendiente() is True
 
     def test_guarda_atributos_basicos(self):
         s = _solicitud_basica()
-        p = Parada(3, s, 15)
+        p = Parada(3, s, _hora(8, 15))
         assert p.orden == 3
         assert p.solicitud == s
-        assert p.llegada_prevista == 15
+        assert p.llegada_prevista == _hora(8, 15)
 
     def test_arranca_sin_datos_de_cierre(self):
         # Los datos de entrega y del incidente se completan al cerrar la parada.
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         assert p.receptor is None
         assert p.fecha_hora_real is None
         assert p.incidente is None
@@ -35,38 +36,38 @@ class TestMaquinaEstadosParada:
     puede salir. Una vez ENTREGADA o FALLIDA, no se puede volver atras."""
 
     def test_entregar_desde_pendiente_pasa_a_entregada(self):
-        p = Parada(1, _solicitud_basica(), 10)
-        p.entregar(receptor="Juan", fecha_hora=20)
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        p.entregar(receptor="Juan", fecha_hora=_hora(11))
         assert p.resultado == ResultadoParada.ENTREGADA
         assert p.esta_pendiente() is False
 
     def test_marcar_fallida_desde_pendiente_pasa_a_fallida(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         p.marcar_fallida(incidente=None)
         assert p.resultado == ResultadoParada.FALLIDA
         assert p.esta_pendiente() is False
 
     def test_entregar_dos_veces_lanza_error(self):
-        p = Parada(1, _solicitud_basica(), 10)
-        p.entregar("Juan", 20)
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        p.entregar("Juan", _hora(11))
         with pytest.raises(TransicionIlegal):
-            p.entregar("Otro", 25)
+            p.entregar("Otro", _hora(11, 30))
 
     def test_marcar_fallida_dos_veces_lanza_error(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         p.marcar_fallida(None)
         with pytest.raises(TransicionIlegal):
             p.marcar_fallida(None)
 
     def test_entregar_despues_de_fallida_lanza_error(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         p.marcar_fallida(None)
         with pytest.raises(TransicionIlegal):
-            p.entregar("Juan", 20)
+            p.entregar("Juan", _hora(11))
 
     def test_marcar_fallida_despues_de_entregada_lanza_error(self):
-        p = Parada(1, _solicitud_basica(), 10)
-        p.entregar("Juan", 20)
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        p.entregar("Juan", _hora(11))
         with pytest.raises(TransicionIlegal):
             p.marcar_fallida(None)
 
@@ -76,15 +77,15 @@ class TestDatosDeCierre:
     es el registro de que paso."""
 
     def test_entregar_guarda_receptor_y_fecha(self):
-        p = Parada(1, _solicitud_basica(), 10)
-        p.entregar(receptor="Juan", fecha_hora=20)
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        p.entregar(receptor="Juan", fecha_hora=_hora(11))
         assert p.receptor == "Juan"
-        assert p.fecha_hora_real == 20
+        assert p.fecha_hora_real == _hora(11)
 
     def test_marcar_fallida_guarda_incidente(self):
         s = _solicitud_basica()
-        p = Parada(1, s, 10)
-        i = Incidente("I1", TipoIncidente.RETRASO, 15, "trafico", s)
+        p = Parada(1, s, _hora(10))
+        i = Incidente("I1", TipoIncidente.RETRASO, _hora(8, 15), "trafico", s)
         p.marcar_fallida(i)
         assert p.incidente is i
 
@@ -94,7 +95,7 @@ class TestActualizarOrden:
     parada dentro del itinerario. Lo usa Itinerario cuando reordena o quita."""
 
     def test_actualizar_orden_cambia_la_posicion(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         p.actualizar_orden(5)
         assert p.orden == 5
 
@@ -107,37 +108,91 @@ class TestInmutabilidadParada:
     def test_no_se_puede_setear_resultado_desde_afuera(self):
         # El ataque literal del issue: saltarse registrar_entrega() escribiendo
         # el resultado directo.
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         with pytest.raises(AttributeError):
             p.resultado = ResultadoParada.ENTREGADA
 
     def test_no_se_puede_setear_receptor_desde_afuera(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         with pytest.raises(AttributeError):
             p.receptor = "Juan"
 
     def test_no_se_puede_setear_fecha_hora_real_desde_afuera(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         with pytest.raises(AttributeError):
             p.fecha_hora_real = 20
 
     def test_no_se_puede_setear_incidente_desde_afuera(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         with pytest.raises(AttributeError):
             p.incidente = None
 
     def test_no_se_puede_reasignar_solicitud(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         with pytest.raises(AttributeError):
             p.solicitud = _solicitud_basica()
 
     def test_no_se_puede_reasignar_orden_por_asignacion(self):
         # El orden se cambia SOLO via actualizar_orden(), no con `p.orden = x`.
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         with pytest.raises(AttributeError):
             p.orden = 5
 
     def test_no_se_puede_reasignar_llegada_prevista(self):
-        p = Parada(1, _solicitud_basica(), 10)
+        p = Parada(1, _solicitud_basica(), _hora(10))
         with pytest.raises(AttributeError):
             p.llegada_prevista = 999
+
+
+class TestValidacionParada:
+    """Orden entero >= 1, solicitud real y llegada prevista como datetime."""
+
+    def test_orden_cero_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="orden"):
+            Parada(0, _solicitud_basica(), _hora(10))
+
+    def test_orden_negativo_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="orden"):
+            Parada(-1, _solicitud_basica(), _hora(10))
+
+    def test_orden_no_entero_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="orden"):
+            Parada("1", _solicitud_basica(), _hora(10))
+
+    def test_solicitud_invalida_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="Solicitud"):
+            Parada(1, "S1", _hora(10))
+
+    def test_llegada_prevista_numerica_lanza_error(self):
+        # Convencion de tiempos: la llegada prevista es un datetime.
+        with pytest.raises(DatosInvalidos, match="datetime"):
+            Parada(1, _solicitud_basica(), 10)
+
+    def test_actualizar_orden_invalido_lanza_error(self):
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        with pytest.raises(DatosInvalidos, match="orden"):
+            p.actualizar_orden(0)
+        assert p.orden == 1
+
+    def test_actualizar_llegada_cambia_la_llegada(self):
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        p.actualizar_llegada(_hora(10, 30))
+        assert p.llegada_prevista == _hora(10, 30)
+
+    def test_actualizar_llegada_con_numero_lanza_error(self):
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        with pytest.raises(DatosInvalidos, match="datetime"):
+            p.actualizar_llegada(11)
+        assert p.llegada_prevista == _hora(10)
+
+    def test_entregar_con_receptor_vacio_lanza_error_y_sigue_pendiente(self):
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        with pytest.raises(DatosInvalidos, match="receptor"):
+            p.entregar("", _hora(11))
+        assert p.esta_pendiente() is True
+
+    def test_entregar_con_fecha_numerica_lanza_error_y_sigue_pendiente(self):
+        p = Parada(1, _solicitud_basica(), _hora(10))
+        with pytest.raises(DatosInvalidos, match="datetime"):
+            p.entregar("Juan", 11)
+        assert p.esta_pendiente() is True

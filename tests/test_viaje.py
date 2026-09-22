@@ -4,11 +4,11 @@ import pytest
 
 from modelado import (
     EstadoViaje, TransicionIlegal, Itinerario, DatosInvalidos,
-    Deposito, Ubicacion, Ventana, Solicitud, Articulo,
+    Deposito, Ubicacion, Solicitud, Articulo,
     MatrizDistancias, Furgoneta, Viaje,
     Incidente, TipoIncidente,
 )
-from tests.helpers import _make_viaje_planificado
+from tests.helpers import _make_viaje_planificado, _hora, _ventana_amplia
 
 
 # ============================================================
@@ -29,14 +29,14 @@ def _matriz_completa():
 
 def _solicitud(id, destino, peso=1.0):
     art = Articulo(f"A-{id}", "paquete", peso, 0.1)
-    return Solicitud(id, destino, Ventana(0, 100), [art])
+    return Solicitud(id, destino, _ventana_amplia(), [art])
 
 
 def _viaje_con_solicitudes(cantidad=2):
     """Devuelve (viaje, [solicitudes]) con las solicitudes ya agregadas."""
     d, u1, u2, matriz = _matriz_completa()
     transporte = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
-    viaje = Viaje("V1", "2026-09-07", transporte, d, matriz, 8)
+    viaje = Viaje("V1", "2026-09-07", transporte, d, matriz, _hora(8))
     destinos = [u1, u2]
     solicitudes = []
     for i in range(cantidad):
@@ -51,7 +51,7 @@ def _viaje_finalizado():
     con una solicitud entregada, para usar en tests que necesitan estado FINALIZADO."""
     viaje, [s1] = _viaje_con_solicitudes(1)
     viaje.iniciar()
-    viaje.registrar_entrega(s1, "Juan", 30)
+    viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
     viaje.finalizar()
     return viaje
 
@@ -93,7 +93,7 @@ class TestEstadoViaje_Maquina:
     def test_ciclo_completo_planificado_encurso_finalizado(self):
         viaje, [s1] = _viaje_con_solicitudes(1)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
         viaje.finalizar()
         assert viaje.estado == EstadoViaje.FINALIZADO
 
@@ -145,8 +145,8 @@ class TestDobleAsignacionEntreViajes:
         d, u1, _, matriz = _matriz_completa()
         f1 = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
         f2 = Furgoneta("F2", 1000, 5.0, 60, 200, 50, 0.27)
-        v1 = Viaje("V1", "2026-09-07", f1, d, matriz, 8)
-        v2 = Viaje("V2", "2026-09-07", f2, d, matriz, 8)
+        v1 = Viaje("V1", "2026-09-07", f1, d, matriz, _hora(8))
+        v2 = Viaje("V2", "2026-09-07", f2, d, matriz, _hora(8))
 
         s = _solicitud("S1", u1, peso=2.0)
         v1.agregar_solicitud(s)
@@ -165,7 +165,7 @@ class TestDobleAsignacionEntreViajes:
 
         d, u1, _, matriz = _matriz_completa()
         f = Furgoneta("F2", 1000, 5.0, 60, 200, 50, 0.27)
-        v2 = Viaje("V2", "2026-09-07", f, d, matriz, 8)
+        v2 = Viaje("V2", "2026-09-07", f, d, matriz, _hora(8))
         with pytest.raises(DatosInvalidos):
             v2.agregar_solicitud(s_entregada)
         assert v2.paradas == []
@@ -184,7 +184,7 @@ class TestOrdenDeEjecucion:
         viaje.iniciar()
         # S2 es la segunda: no se puede tocar mientras S1 siga pendiente.
         with pytest.raises(TransicionIlegal):
-            viaje.registrar_entrega(s2, "Juan", 30)
+            viaje.registrar_entrega(s2, "Juan", _hora(9, 30))
         # Nada cambio: S1 sigue siendo la parada actual y no hay comprobantes.
         assert viaje.parada_actual().solicitud == s1
         assert viaje.comprobantes == []
@@ -192,7 +192,7 @@ class TestOrdenDeEjecucion:
     def test_no_se_puede_fallar_fuera_de_orden(self):
         viaje, [s1, s2] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        incidente = Incidente("I1", TipoIncidente.AUSENTE, 30, "nadie", s2)
+        incidente = Incidente("I1", TipoIncidente.AUSENTE, _hora(9, 30), "nadie", s2)
         with pytest.raises(TransicionIlegal):
             viaje.registrar_fallo(s2, incidente)
         assert viaje.parada_actual().solicitud == s1
@@ -201,9 +201,9 @@ class TestOrdenDeEjecucion:
     def test_entregar_en_orden_avanza_a_la_siguiente(self):
         viaje, [s1, s2] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
         # Ahora S2 es la actual y se puede entregar.
-        viaje.registrar_entrega(s2, "Ana", 40)
+        viaje.registrar_entrega(s2, "Ana", _hora(10))
         assert viaje.esta_completo() is True
 
     def test_entregar_con_receptor_vacio_lanza_error_y_no_cambia_estado(self):
@@ -212,7 +212,7 @@ class TestOrdenDeEjecucion:
         viaje, [s1, _] = _viaje_con_solicitudes(2)
         viaje.iniciar()
         with pytest.raises(DatosInvalidos):
-            viaje.registrar_entrega(s1, "", 30)
+            viaje.registrar_entrega(s1, "", _hora(9, 30))
         # Atomicidad: la parada NO debe haber quedado entregada,
         # y no debe haber comprobante nuevo.
         assert viaje.parada_actual().solicitud == s1
@@ -225,13 +225,13 @@ class TestOrdenDeEjecucion:
         viaje.iniciar()
         s_ajena = _solicitud("S99", Ubicacion("U99", "x", ""))
         with pytest.raises(TransicionIlegal):
-            viaje.registrar_entrega(s_ajena, "Juan", 30)
+            viaje.registrar_entrega(s_ajena, "Juan", _hora(9, 30))
 
     def test_fallar_una_solicitud_ajena_al_viaje_lanza_error(self):
         viaje, _ = _viaje_con_solicitudes(2)
         viaje.iniciar()
         s_ajena = _solicitud("S99", Ubicacion("U99", "x", ""))
-        incidente = Incidente("I1", TipoIncidente.AUSENTE, 30, "nadie", s_ajena)
+        incidente = Incidente("I1", TipoIncidente.AUSENTE, _hora(9, 30), "nadie", s_ajena)
         with pytest.raises(TransicionIlegal):
             viaje.registrar_fallo(s_ajena, incidente)
 
@@ -325,16 +325,16 @@ class TestEstaCompleto:
     def test_viaje_con_todas_las_paradas_entregadas_esta_completo(self):
         viaje, [s1, s2] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
-        viaje.registrar_entrega(s2, "Ana", 40)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
+        viaje.registrar_entrega(s2, "Ana", _hora(10))
         assert viaje.esta_completo() is True
 
     def test_viaje_con_paradas_falladas_tambien_cuenta_como_completo(self):
         # Una parada fallida ya no esta pendiente, asi que el viaje esta completo.
         viaje, [s1, s2] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
-        incidente = Incidente("I1", TipoIncidente.AUSENTE, 40, "nadie", s2)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
+        incidente = Incidente("I1", TipoIncidente.AUSENTE, _hora(10), "nadie", s2)
         viaje.registrar_fallo(s2, incidente)
         assert viaje.esta_completo() is True
 
@@ -355,15 +355,15 @@ class TestParadaActual:
     def test_parada_actual_avanza_despues_de_entregar(self):
         viaje, [s1, s2] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
         actual = viaje.parada_actual()
         assert actual.solicitud == s2
 
     def test_parada_actual_es_none_cuando_todo_esta_entregado(self):
         viaje, [s1, s2] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
-        viaje.registrar_entrega(s2, "Ana", 40)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
+        viaje.registrar_entrega(s2, "Ana", _hora(10))
         assert viaje.parada_actual() is None
 
 
@@ -380,7 +380,7 @@ class TestRecorrer:
     def test_recorrer_desde_en_curso_completo_pasa_a_finalizado(self):
         viaje, [s1] = _viaje_con_solicitudes(1)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
         viaje.recorrer()  # EN_CURSO + completo -> FINALIZADO
         assert viaje.estado == EstadoViaje.FINALIZADO
 
@@ -404,14 +404,14 @@ class TestRegistrarEntrega:
     def test_registrar_entrega_marca_parada_como_entregada(self):
         viaje, [s1, _] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
         parada = next(p for p in viaje.paradas if p.solicitud == s1)
         assert parada.esta_pendiente() is False
 
     def test_registrar_entrega_crea_un_comprobante(self):
         viaje, [s1, _] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
         assert len(viaje.comprobantes) == 1
         assert viaje.comprobantes[0].receptor == "Juan"
 
@@ -419,22 +419,22 @@ class TestRegistrarEntrega:
         # La parada ahora es un registro completo: guarda quien recibio y cuando.
         viaje, [s1, _] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
         parada = next(p for p in viaje.paradas if p.solicitud == s1)
         assert parada.receptor == "Juan"
-        assert parada.fecha_hora_real == 30
+        assert parada.fecha_hora_real == _hora(9, 30)
 
     def test_registrar_entrega_en_planificado_lanza_error(self):
         viaje, [s1, _] = _viaje_con_solicitudes(2)
         # sin iniciar: sigue en PLANIFICADO
         with pytest.raises(TransicionIlegal):
-            viaje.registrar_entrega(s1, "Juan", 30)
+            viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
 
     def test_registrar_entrega_en_finalizado_lanza_error(self):
         viaje = _viaje_finalizado()
         s = _solicitud("SX", Ubicacion("UX", "x", ""))
         with pytest.raises(TransicionIlegal):
-            viaje.registrar_entrega(s, "Juan", 30)
+            viaje.registrar_entrega(s, "Juan", _hora(9, 30))
 
 
 # ============================================================
@@ -443,7 +443,7 @@ class TestRegistrarEntrega:
 
 class TestRegistrarFallo:
     def _incidente(self, solicitud):
-        return Incidente("I1", TipoIncidente.DANIO, 30, "paquete roto", solicitud)
+        return Incidente("I1", TipoIncidente.DANIO, _hora(9, 30), "paquete roto", solicitud)
 
     def test_registrar_fallo_marca_parada_como_fallida(self):
         viaje, [s1, _] = _viaje_con_solicitudes(2)
@@ -486,13 +486,13 @@ class TestRegistrarFallo:
 class TestRegistrarIncidente:
     def test_registrar_incidente_lo_agrega_a_la_lista(self):
         v = _make_viaje_planificado()
-        i = Incidente("I1", TipoIncidente.RETRASO, 15, "trafico", v.itinerario.transporte)
+        i = Incidente("I1", TipoIncidente.RETRASO, _hora(8, 15), "trafico", v.itinerario.transporte)
         v.registrar_incidente(i)
         assert i in v.incidentes
 
     def test_registrar_incidente_sobre_solicitud_del_viaje(self):
         viaje, [s1, _] = _viaje_con_solicitudes(2)
-        i = Incidente("I1", TipoIncidente.RETRASO, 15, "demora en la entrega", s1)
+        i = Incidente("I1", TipoIncidente.RETRASO, _hora(8, 15), "demora en la entrega", s1)
         viaje.registrar_incidente(i)
         assert i in viaje.incidentes
 
@@ -500,7 +500,7 @@ class TestRegistrarIncidente:
         # Regla 12: el afectado debe ser una solicitud del viaje o su transporte.
         viaje, _ = _viaje_con_solicitudes(2)
         s_ajena = _solicitud("S99", Ubicacion("U99", "x", ""))
-        i = Incidente("I1", TipoIncidente.RETRASO, 15, "demora", s_ajena)
+        i = Incidente("I1", TipoIncidente.RETRASO, _hora(8, 15), "demora", s_ajena)
         with pytest.raises(DatosInvalidos, match="no pertenece"):
             viaje.registrar_incidente(i)
         assert viaje.incidentes == []
@@ -508,7 +508,7 @@ class TestRegistrarIncidente:
     def test_registrar_incidente_sobre_otro_transporte_lanza_error(self):
         viaje, _ = _viaje_con_solicitudes(2)
         otro = Furgoneta("F99", 1000, 5.0, 60, 200, 50, 0.27)
-        i = Incidente("I1", TipoIncidente.DANIO, 15, "choque", otro)
+        i = Incidente("I1", TipoIncidente.DANIO, _hora(8, 15), "choque", otro)
         with pytest.raises(DatosInvalidos, match="no es el de este viaje"):
             viaje.registrar_incidente(i)
         assert viaje.incidentes == []
@@ -535,7 +535,7 @@ class TestRegistrarFalloExigeIncidente:
     def test_fallo_con_incidente_de_otra_solicitud_lanza_error(self):
         viaje, [s1, s2] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        i = Incidente("I1", TipoIncidente.AUSENTE, 30, "nadie", s2)
+        i = Incidente("I1", TipoIncidente.AUSENTE, _hora(9, 30), "nadie", s2)
         with pytest.raises(DatosInvalidos, match="no a la solicitud"):
             viaje.registrar_fallo(s1, i)
         assert viaje.parada_actual().solicitud == s1
@@ -545,7 +545,7 @@ class TestRegistrarFalloExigeIncidente:
         # Un desperfecto del vehiculo tambien explica una entrega fallida.
         viaje, [s1, _] = _viaje_con_solicitudes(2)
         viaje.iniciar()
-        i = Incidente("I1", TipoIncidente.DANIO, 30, "pinchazo", viaje.itinerario.transporte)
+        i = Incidente("I1", TipoIncidente.DANIO, _hora(9, 30), "pinchazo", viaje.itinerario.transporte)
         viaje.registrar_fallo(s1, i)
         assert viaje.parada_actual().solicitud != s1
         assert i in viaje.incidentes
@@ -580,7 +580,7 @@ class TestResumen:
         assert viaje.resumen()["cantidad_paradas"] == 2
         assert viaje.resumen()["entregas"] == 0
         viaje.iniciar()
-        viaje.registrar_entrega(s1, "Juan", 30)
+        viaje.registrar_entrega(s1, "Juan", _hora(9, 30))
         assert viaje.resumen()["entregas"] == 1
 
     def test_resumen_devuelve_un_dict_nuevo_en_cada_llamada(self):
@@ -599,7 +599,7 @@ class TestValidacionViaje:
     def _armar(self, id_viaje):
         d, _, _, matriz = _matriz_completa()
         t = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
-        return Viaje(id_viaje, "2026-09-07", t, d, matriz, 8)
+        return Viaje(id_viaje, "2026-09-07", t, d, matriz, _hora(8))
 
     def test_id_valido_construye(self):
         assert self._armar("V1").id == "V1"

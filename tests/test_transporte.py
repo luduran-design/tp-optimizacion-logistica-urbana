@@ -1,5 +1,7 @@
 """Tests de la jerarquia de Transporte: polimorfismo, validaciones, tiempo, costo, inmutabilidad."""
 
+from datetime import timedelta
+
 import pytest
 
 from modelado import Furgoneta, DatosInvalidos
@@ -42,21 +44,22 @@ class TestPolimorfismoImpacto:
 
 
 class TestTiempoDeTramo:
-    """tiempo_de_tramo(km) = km / velocidad_media. Es comun a todos los transportes."""
+    """tiempo_de_tramo(km) = km / velocidad_media, como timedelta (regla 6).
+    Es comun a todos los transportes."""
 
     def test_tiempo_proporcional_a_distancia(self):
         _, f, _ = _make_transportes()  # velocidad_media = 60
-        assert f.tiempo_de_tramo(60) == pytest.approx(1.0)
+        assert f.tiempo_de_tramo(60) == timedelta(hours=1)
 
     def test_tiempo_cero_para_distancia_cero(self):
         _, f, _ = _make_transportes()
-        assert f.tiempo_de_tramo(0) == 0
+        assert f.tiempo_de_tramo(0) == timedelta(0)
 
     def test_tiempo_se_calcula_igual_en_todos_los_subtipos(self):
         m, f, c = _make_transportes()
-        assert m.tiempo_de_tramo(40) == pytest.approx(1.0)
-        assert f.tiempo_de_tramo(60) == pytest.approx(1.0)
-        assert c.tiempo_de_tramo(50) == pytest.approx(1.0)
+        assert m.tiempo_de_tramo(40) == timedelta(hours=1)
+        assert f.tiempo_de_tramo(60) == timedelta(hours=1)
+        assert c.tiempo_de_tramo(50) == timedelta(hours=1)
 
 
 class TestCalcularCosto:
@@ -171,3 +174,8 @@ class TestInmutabilidadTransporte:
     def test_no_se_puede_reasignar_factor_ambiental(self):
         with pytest.raises(AttributeError):
             self._furgoneta().factor_ambiental = -1
+
+    def test_tiempo_de_tramo_se_puede_sumar_a_un_datetime(self):
+        # 15 km a 30 km/h = 30 minutos: es lo que usa Itinerario para las llegadas.
+        f = Furgoneta("F1", 500, 8, 30, 2, 5, 0.27)
+        assert f.tiempo_de_tramo(15) == timedelta(minutes=30)

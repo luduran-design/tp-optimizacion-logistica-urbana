@@ -13,7 +13,9 @@ import pytest
 from modelado import (
     VecinoMasCercano, MenorVentanaPrimero,
     Deposito, Ubicacion, Ventana, Solicitud, Articulo, MatrizDistancias,
+    DatosInvalidos,
 )
+from tests.helpers import _hora
 
 
 # ============================================================
@@ -25,8 +27,8 @@ def _art():
 
 
 def _solicitud(id, destino, ventana_fin):
-    """Solicitud con ventana que va de 0 a `ventana_fin`."""
-    return Solicitud(id, destino, Ventana(0, ventana_fin), _art())
+    """Solicitud con ventana desde las 00:00 hasta la hora `ventana_fin` (entera)."""
+    return Solicitud(id, destino, Ventana(_hora(0), _hora(ventana_fin)), _art())
 
 
 def _escenario():
@@ -58,9 +60,9 @@ class TestVecinoMasCercano:
     def test_arranca_por_la_mas_cercana_al_deposito(self):
         d, u1, u2, u3, matriz = _escenario()
         # Ventanas iguales para que la politica solo mire distancias.
-        s1 = _solicitud("S1", u1, 100)
-        s2 = _solicitud("S2", u2, 100)
-        s3 = _solicitud("S3", u3, 100)
+        s1 = _solicitud("S1", u1, 18)
+        s2 = _solicitud("S2", u2, 18)
+        s3 = _solicitud("S3", u3, 18)
         politica = VecinoMasCercano()
         orden = politica.sugerir_orden(d, [s1, s2, s3], matriz)
         # U3 esta a 5 km (la mas cercana al deposito), tiene que ir primera.
@@ -68,9 +70,9 @@ class TestVecinoMasCercano:
 
     def test_sigue_por_la_mas_cercana_a_la_anterior(self):
         d, u1, u2, u3, matriz = _escenario()
-        s1 = _solicitud("S1", u1, 100)
-        s2 = _solicitud("S2", u2, 100)
-        s3 = _solicitud("S3", u3, 100)
+        s1 = _solicitud("S1", u1, 18)
+        s2 = _solicitud("S2", u2, 18)
+        s3 = _solicitud("S3", u3, 18)
         politica = VecinoMasCercano()
         orden = politica.sugerir_orden(d, [s1, s2, s3], matriz)
         # Empezando en U3: lo mas cercano es U1 (3 km).
@@ -79,9 +81,9 @@ class TestVecinoMasCercano:
 
     def test_devuelve_todas_las_solicitudes(self):
         d, u1, u2, u3, matriz = _escenario()
-        s1 = _solicitud("S1", u1, 100)
-        s2 = _solicitud("S2", u2, 100)
-        s3 = _solicitud("S3", u3, 100)
+        s1 = _solicitud("S1", u1, 18)
+        s2 = _solicitud("S2", u2, 18)
+        s3 = _solicitud("S3", u3, 18)
         politica = VecinoMasCercano()
         orden = politica.sugerir_orden(d, [s1, s2, s3], matriz)
         assert set(orden) == {s1, s2, s3}
@@ -95,9 +97,9 @@ class TestMenorVentanaPrimero:
     def test_ordena_por_ventana_fin_ascendente(self):
         d, u1, u2, u3, matriz = _escenario()
         # Ventanas distintas: S2 cierra primero, S1 despues, S3 al final.
-        s1 = _solicitud("S1", u1, ventana_fin=50)
-        s2 = _solicitud("S2", u2, ventana_fin=20)
-        s3 = _solicitud("S3", u3, ventana_fin=90)
+        s1 = _solicitud("S1", u1, ventana_fin=12)
+        s2 = _solicitud("S2", u2, ventana_fin=9)
+        s3 = _solicitud("S3", u3, ventana_fin=15)
         politica = MenorVentanaPrimero()
         orden = politica.sugerir_orden(d, [s1, s2, s3], matriz)
         assert orden == [s2, s1, s3]
@@ -105,17 +107,17 @@ class TestMenorVentanaPrimero:
     def test_no_depende_de_distancias(self):
         # Aunque U3 esta cerca del deposito, si su ventana cierra tarde va al final.
         d, _, u2, u3, matriz = _escenario()
-        s_urgente_lejos = _solicitud("S1", u2, ventana_fin=10)   # lejos pero urgente
-        s_tranqui_cerca = _solicitud("S2", u3, ventana_fin=100)  # cerca pero tranqui
+        s_urgente_lejos = _solicitud("S1", u2, ventana_fin=8)   # lejos pero urgente
+        s_tranqui_cerca = _solicitud("S2", u3, ventana_fin=18)  # cerca pero tranqui
         politica = MenorVentanaPrimero()
         orden = politica.sugerir_orden(d, [s_tranqui_cerca, s_urgente_lejos], matriz)
         assert orden == [s_urgente_lejos, s_tranqui_cerca]
 
     def test_devuelve_todas_las_solicitudes(self):
         d, u1, u2, u3, matriz = _escenario()
-        s1 = _solicitud("S1", u1, 50)
-        s2 = _solicitud("S2", u2, 20)
-        s3 = _solicitud("S3", u3, 90)
+        s1 = _solicitud("S1", u1, 12)
+        s2 = _solicitud("S2", u2, 9)
+        s3 = _solicitud("S3", u3, 15)
         politica = MenorVentanaPrimero()
         orden = politica.sugerir_orden(d, [s1, s2, s3], matriz)
         assert set(orden) == {s1, s2, s3}
@@ -130,10 +132,48 @@ class TestPoliticasIntercambiables:
         # Regla 13: son intercambiables. Cualquier codigo cliente puede llamar
         # a cualquiera sin cambiar el tipo de resultado.
         d, u1, u2, u3, matriz = _escenario()
-        s1 = _solicitud("S1", u1, 50)
-        s2 = _solicitud("S2", u2, 20)
-        s3 = _solicitud("S3", u3, 90)
+        s1 = _solicitud("S1", u1, 12)
+        s2 = _solicitud("S2", u2, 9)
+        s3 = _solicitud("S3", u3, 15)
 
         for politica in (VecinoMasCercano(), MenorVentanaPrimero()):
             orden = politica.sugerir_orden(d, [s1, s2, s3], matriz)
             assert len(orden) == 3
+
+
+# ============================================================
+# Regla 13: consultivas. No modifican la lista ni asignan solicitudes.
+# ============================================================
+
+class TestPoliticasSinEfectos:
+    def test_no_modifican_la_lista_recibida_ni_asignan(self):
+        d, u1, u2, u3, matriz = _escenario()
+        s1 = _solicitud("S1", u1, 12)
+        s2 = _solicitud("S2", u2, 9)
+        s3 = _solicitud("S3", u3, 15)
+        original = [s1, s2, s3]
+        for politica in (VecinoMasCercano(), MenorVentanaPrimero()):
+            orden = politica.sugerir_orden(d, original, matriz)
+            assert orden is not original
+            assert original == [s1, s2, s3]
+            assert all(not s.esta_asignada() for s in original)
+
+    def test_las_dos_politicas_ordenan_distinto_la_misma_lista(self):
+        # Prueba minima del enunciado: dos politicas, misma lista, resultados distintos.
+        d, u1, u2, u3, matriz = _escenario()
+        s1 = _solicitud("S1", u1, 12)
+        s2 = _solicitud("S2", u2, 9)
+        s3 = _solicitud("S3", u3, 15)
+        por_distancia = VecinoMasCercano().sugerir_orden(d, [s1, s2, s3], matriz)
+        por_urgencia = MenorVentanaPrimero().sugerir_orden(d, [s1, s2, s3], matriz)
+        assert por_distancia == [s3, s1, s2]
+        assert por_urgencia == [s2, s1, s3]
+        assert por_distancia != por_urgencia
+
+    def test_entrada_invalida_lanza_error(self):
+        d, u1, _, _, matriz = _escenario()
+        s1 = _solicitud("S1", u1, 12)
+        with pytest.raises(DatosInvalidos):
+            VecinoMasCercano().sugerir_orden(u1, [s1], matriz)      # u1 no es un Deposito
+        with pytest.raises(DatosInvalidos):
+            MenorVentanaPrimero().sugerir_orden(d, [s1, "S2"], matriz)

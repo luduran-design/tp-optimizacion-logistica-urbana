@@ -3,47 +3,52 @@
 import pytest
 
 from modelado import Incidente, TipoIncidente, DatosInvalidos
-from tests.helpers import _solicitud_basica, _make_transportes
+from tests.helpers import _solicitud_basica, _make_transportes, _hora
 
 
 def _incidente_valido(afectado=None):
     if afectado is None:
         afectado = _solicitud_basica()
-    return Incidente("I1", TipoIncidente.DANIO, 10, "paquete roto", afectado)
+    return Incidente("I1", TipoIncidente.DANIO, _hora(10), "paquete roto", afectado)
 
 
 class TestValidacionIncidente:
     def test_incidente_valido_construye(self):
         s = _solicitud_basica()
-        i = Incidente("I1", TipoIncidente.DANIO, 10, "paquete roto", s)
+        i = Incidente("I1", TipoIncidente.DANIO, _hora(10), "paquete roto", s)
         assert i.id == "I1"
         assert i.tipo == TipoIncidente.DANIO
-        assert i.fecha_hora == 10
+        assert i.fecha_hora == _hora(10)
         assert i.descripcion == "paquete roto"
         assert i.afectado is s
 
     def test_id_vacio_lanza_error(self):
         with pytest.raises(DatosInvalidos, match="id"):
-            Incidente("", TipoIncidente.DANIO, 10, "paquete roto", _solicitud_basica())
+            Incidente("", TipoIncidente.DANIO, _hora(10), "paquete roto", _solicitud_basica())
 
     def test_tipo_string_libre_lanza_error(self):
         # El ejemplo textual del ayudante: "EL_PERRO_SE_COMIO_EL_PAQUETE"
         # ya no se puede construir.
         with pytest.raises(DatosInvalidos, match="TipoIncidente"):
-            Incidente("I1", "EL_PERRO_SE_COMIO_EL_PAQUETE", 10, "x", _solicitud_basica())
+            Incidente("I1", "EL_PERRO_SE_COMIO_EL_PAQUETE", _hora(10), "x", _solicitud_basica())
 
     def test_fecha_hora_none_lanza_error(self):
         with pytest.raises(DatosInvalidos, match="fecha"):
             Incidente("I1", TipoIncidente.DANIO, None, "paquete roto", _solicitud_basica())
 
+    def test_fecha_hora_numerica_lanza_error(self):
+        # Convencion de tiempos: el instante del incidente es un datetime.
+        with pytest.raises(DatosInvalidos, match="datetime"):
+            Incidente("I1", TipoIncidente.DANIO, 10, "paquete roto", _solicitud_basica())
+
     def test_descripcion_vacia_lanza_error(self):
         # Regla 12 prohibe descripcion vacia.
         with pytest.raises(DatosInvalidos, match="descripcion"):
-            Incidente("I1", TipoIncidente.DANIO, 10, "", _solicitud_basica())
+            Incidente("I1", TipoIncidente.DANIO, _hora(10), "", _solicitud_basica())
 
     def test_descripcion_solo_espacios_lanza_error(self):
         with pytest.raises(DatosInvalidos, match="descripcion"):
-            Incidente("I1", TipoIncidente.DANIO, 10, "   ", _solicitud_basica())
+            Incidente("I1", TipoIncidente.DANIO, _hora(10), "   ", _solicitud_basica())
 
 
 class TestAfectado:
@@ -51,11 +56,11 @@ class TestAfectado:
 
     def test_afectado_none_lanza_error(self):
         with pytest.raises(DatosInvalidos, match="afectado"):
-            Incidente("I1", TipoIncidente.DANIO, 10, "paquete roto", None)
+            Incidente("I1", TipoIncidente.DANIO, _hora(10), "paquete roto", None)
 
     def test_afectado_de_otro_tipo_lanza_error(self):
         with pytest.raises(DatosInvalidos, match="afectado"):
-            Incidente("I1", TipoIncidente.DANIO, 10, "paquete roto", "el chofer")
+            Incidente("I1", TipoIncidente.DANIO, _hora(10), "paquete roto", "el chofer")
 
     def test_afectado_solicitud(self):
         i = _incidente_valido(_solicitud_basica())

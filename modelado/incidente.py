@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from modelado.excepciones import DatosInvalidos
 from modelado.enums import TipoIncidente
 from modelado.solicitud import Solicitud
@@ -18,8 +20,8 @@ class Incidente:
             raise DatosInvalidos("El id del incidente debe ser un texto no vacio")
         if not isinstance(tipo, TipoIncidente):
             raise DatosInvalidos(f"tipo debe ser un TipoIncidente, no {tipo!r}")
-        if fecha_hora is None:
-            raise DatosInvalidos("El incidente debe tener fecha y hora")
+        if not isinstance(fecha_hora, datetime):
+            raise DatosInvalidos("La fecha y hora del incidente debe ser un datetime")
         if not isinstance(descripcion, str) or not descripcion.strip():
             raise DatosInvalidos("La descripcion del incidente no puede estar vacia")
         if not isinstance(afectado, (Solicitud, Transporte)):
