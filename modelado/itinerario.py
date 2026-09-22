@@ -88,8 +88,9 @@ class Itinerario:
 
         Valida en este orden:
           - regla 5: la solicitud no esta asignada a otro viaje ni duplicada aca;
+          - regla 2: el destino no es el deposito;
           - regla 3: la ruta tiene todos los tramos necesarios;
-          - regla 2: la carga total no excede la capacidad del transporte.
+          - regla 4: la carga total no excede la capacidad del transporte.
         Si cualquier chequeo falla, no se modifica ni la secuencia ni la distancia
         (regla 7). Solo al pasar todos los chequeos se aplica la propuesta y se
         marca la solicitud como asignada.
@@ -106,6 +107,12 @@ class Itinerario:
         if any(p.solicitud == solicitud for p in self._paradas):
             raise DatosInvalidos(
                 f"La solicitud {solicitud.id} ya esta en este itinerario"
+            )
+        # Regla 2: el destino no puede ser el deposito. Se compara por id, asi
+        # que tambien atrapa una Ubicacion comun que tenga el mismo id del deposito.
+        if solicitud.destino == self._deposito:
+            raise DatosInvalidos(
+                f"El destino de la solicitud {solicitud.id} no puede ser el deposito"
             )
         propuesta = self._paradas + [Parada(len(self._paradas) + 1, solicitud, None)]
         distancia = self._calcular_distancia(propuesta)   # puede lanzar RutaIncompleta
@@ -138,9 +145,16 @@ class Itinerario:
         """Reordena las paradas segun una permutacion de las mismas solicitudes.
 
         La secuencia recibida debe contener exactamente las mismas solicitudes
-        que ya estan en el itinerario, ni una mas ni una menos. Si falta o sobra
-        alguna, lanza DatosInvalidos indicando cual es la diferencia.
+        que ya estan en el itinerario, ni una mas ni una menos, y sin repetir.
+        Si no se cumple, lanza DatosInvalidos indicando cual es la diferencia.
         """
+        # Primero el largo: la comparacion por conjuntos no detecta repetidos,
+        # porque {s1, s1, s2} es igual a {s1, s2}.
+        if len(secuencia) != len(self._paradas):
+            raise DatosInvalidos(
+                f"La secuencia tiene {len(secuencia)} solicitudes y el itinerario "
+                f"{len(self._paradas)}: no puede haber repetidas ni faltantes"
+            )
         actuales = {p.solicitud for p in self._paradas}
         nuevas = set(secuencia)
         if actuales != nuevas:

@@ -27,13 +27,14 @@ class Transporte(ABC):
             raise DatosInvalidos("La capacidad de volumen debe ser positiva")
         if velocidad_media <= 0:
             raise DatosInvalidos("La velocidad media debe ser positiva")
-        # Costos y factor: cero es valido, negativo no.
-        if costo_por_km < 0:
-            raise DatosInvalidos("El costo por km no puede ser negativo")
+        # Regla 1: costo por km y factor ambiental son positivos;
+        # el costo por parada es el unico que admite cero (no negativo).
+        if costo_por_km <= 0:
+            raise DatosInvalidos("El costo por km debe ser positivo")
         if costo_por_parada < 0:
             raise DatosInvalidos("El costo por parada no puede ser negativo")
-        if factor_ambiental < 0:
-            raise DatosInvalidos("El factor ambiental no puede ser negativo")
+        if factor_ambiental <= 0:
+            raise DatosInvalidos("El factor ambiental debe ser positivo")
         self._id = id
         self._capacidad_peso = capacidad_peso
         self._capacidad_volumen = capacidad_volumen

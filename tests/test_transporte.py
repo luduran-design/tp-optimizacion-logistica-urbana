@@ -112,21 +112,28 @@ class TestValidacionTransporte:
         with pytest.raises(DatosInvalidos, match="costo"):
             Furgoneta("F1", 1000, 5.0, 60, -1, 50, 0.27)
 
-    def test_costo_por_km_cero_es_valido(self):
-        f = Furgoneta("F1", 1000, 5.0, 60, 0, 50, 0.27)
-        assert f.costo_por_km == 0
+    def test_costo_por_km_cero_lanza_error(self):
+        # Regla 1: el costo por km es positivo (a diferencia del costo por parada).
+        with pytest.raises(DatosInvalidos, match="costo"):
+            Furgoneta("F1", 1000, 5.0, 60, 0, 50, 0.27)
 
     def test_costo_por_parada_negativo_lanza_error(self):
         with pytest.raises(DatosInvalidos, match="costo"):
             Furgoneta("F1", 1000, 5.0, 60, 200, -50, 0.27)
 
+    def test_costo_por_parada_cero_es_valido(self):
+        # Regla 1: el costo por parada es "no negativo", cero se admite.
+        f = Furgoneta("F1", 1000, 5.0, 60, 200, 0, 0.27)
+        assert f.costo_por_parada == 0
+
     def test_factor_ambiental_negativo_lanza_error(self):
         with pytest.raises(DatosInvalidos, match="factor"):
             Furgoneta("F1", 1000, 5.0, 60, 200, 50, -0.1)
 
-    def test_factor_ambiental_cero_es_valido(self):
-        f = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0)
-        assert f.factor_ambiental == 0
+    def test_factor_ambiental_cero_lanza_error(self):
+        # Regla 1: el factor ambiental es positivo.
+        with pytest.raises(DatosInvalidos, match="factor"):
+            Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0)
 
 
 class TestInmutabilidadTransporte:
