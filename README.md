@@ -163,213 +163,312 @@ Cada incremento deberá conservar las pruebas anteriores y actualizar brevemente
 - Cada implementación deberá estar sustentada y las reglas críticas demostradas mediante pruebas automatizadas.
 - Se permite la biblioteca estándar de Python; las distancias y ubicaciones son datos locales, no servicios externos.
 
+---
+
+# Implementación
+
+## Estructura del proyecto
+
+El dominio está en el paquete `modelado/`, con un módulo por clase, y el punto de entrada (`main.py`) queda afuera, separando la lógica de negocio de la ejecución. Las pruebas están en `tests/`, con un archivo por clase. El detalle archivo por archivo está en [`ESTRUCTURA.md`](ESTRUCTURA.md).
+
+`modelado/__init__.py` reexporta todas las clases públicas, así que el resto del código importa en forma corta:
+
+```python
+from modelado import Viaje, Empresa, Furgoneta, EstadoViaje, DatosInvalidos
+```
+
+Las dependencias entre módulos van en una sola dirección (`empresa → viaje → itinerario → parada`), lo que evita importaciones circulares. Las clases de datos (`Solicitud`, `Articulo`, `Ubicacion`) no importan a las clases que las administran.
+
+## Excepciones propias
+
+Todas descienden de una raíz común, de modo que un único `except ErrorLogistica` captura cualquier error de negocio sin enumerarlos.
+
+| Excepción | Representa |
+| --- | --- |
+| `ErrorLogistica` | Raíz de la jerarquía; no se lanza directamente. |
+| `DatosInvalidos` | Identificador vacío o duplicado, magnitud fuera de rango, tipo incorrecto, solicitud ya asignada (RN1, RN2, RN5, RN11, RN12). |
+| `CapacidadExcedida` | La carga acumulada supera el peso o el volumen del transporte (RN4). |
+| `RutaIncompleta` | Falta un tramo en la matriz para el sentido recorrido (RN3). |
+| `VentanaIncumplida` | La llegada a una parada supera el fin de su ventana (RN6). |
+| `TransicionIlegal` | Operación no permitida en el estado actual del viaje o de la parada (RN10, RN11). |
+
+## Encapsulamiento
+
+Todos los atributos se guardan con guion bajo (`self._id`, `self._peso`) y se exponen mediante `@property` de solo lectura, sin setters. Las invariantes se validan una sola vez en el `__init__` y no pueden violarse después.
+
+Las colecciones internas se devuelven siempre como copia (`list(self._paradas)`): quien recibe la lista puede modificarla sin afectar al objeto. `Solicitud` además copia la lista de artículos al recibirla, así que si quien la construyó modifica su lista original, la solicitud no se entera. Con esto se cumple que no se puedan agregar paradas ni completar entregas modificando atributos directamente.
+
+El único cambio de estado permitido desde afuera ocurre a través de métodos que validan primero: `agregar_solicitud`, `quitar_solicitud`, `reordenar`, `iniciar`, `finalizar`, `registrar_entrega`, `registrar_fallo`. `Parada.actualizar_orden()` es la única vía para renumerar una parada, y solo la usa `Itinerario`.
+
 ## Criterio de variación del impacto ambiental
 
-Cada subtipo de `Transporte` implementa `calcular_impacto(km)` con una fórmula
-distinta, eligiendo qué variable adicional (además de la distancia y el factor
-ambiental base, mínimo exigido por la consigna) le corresponde a ese tipo de
-vehículo en la realidad:
+Cada subtipo de `Transporte` implementa `calcular_impacto(km, carga_kg)` con una fórmula distinta. El contrato recibe siempre la carga y cada subtipo decide si la usa o la ignora: así la llamada es idéntica para los tres y quien la invoca nunca pregunta de qué tipo es el transporte. La unidad declarada es **kg de CO₂** (RN9).
 
-- **Furgoneta** — fórmula lineal pura: `km * factor_ambiental`. Es el caso
-  base y el que usa el ejemplo de aceptación del enunciado
-  (`45 km * 0.27 = 12.15 kg CO2`), así que sirve como ancla para validar el
-  resto.
+- **Furgoneta** — fórmula lineal pura: `km * factor_ambiental`. Ignora la carga. Es el caso base y el que usa el ejemplo de aceptación (`45 km * 0.27 = 12.15 kg CO₂`), así que sirve como ancla para validar el resto.
 
-- **Motocicleta** — PISO_ARRANQUE_FRIO + (km * factor_ambiental). 
-Un motor recién arrancado todavía no llegó a su temperatura de trabajo ideal, así que consume (y contamina) más en los primeros metros que una vez que ya está en marcha normal. En un recorrido largo ese arranque es un detalle insignificante, pero las motos hacen exactamente lo contrario: entregas urbanas de última milla, con trayectos cortos y paradas constantes. Ahí el "costo del arranque" se repite todo el tiempo y pesa mucho en relación al resto del viaje, porque el viaje en sí es corto. Por eso la fórmula no puede ser puramente lineal: se le agrega un valor fijo (PISO_ARRANQUE_FRIO) que está presente siempre, sin importar la distancia, y que representa ese costo de arranque. En un trayecto corto, ese piso fijo puede ser la mitad o más del impacto total; en un trayecto largo, se vuelve casi despreciable frente al término lineal. Es justamente el comportamiento real de un motor, y una fórmula lineal pura nunca lo hubiera podido representar.
+- **Motocicleta** — `PISO_ARRANQUE_FRIO + km * factor_ambiental`. Ignora la carga.
+  Un motor recién arrancado todavía no llegó a su temperatura de trabajo ideal, así que consume y contamina más en los primeros metros. En un recorrido largo ese arranque es insignificante, pero las motos hacen lo contrario: entregas urbanas de última milla, con trayectos cortos y paradas constantes. Ahí el costo del arranque pesa mucho en relación al resto del viaje. Por eso la fórmula no es puramente lineal: suma un valor fijo (`PISO_ARRANQUE_FRIO = 0.5`, atributo de clase) presente siempre, sin importar la distancia. En un trayecto corto ese piso es una fracción importante del total; en uno largo se vuelve despreciable frente al término lineal.
 
-- **Camión** — se multiplica por un factor que crece según qué porcentaje de
-  su capacidad está transportando (`km * factor_ambiental * (1 + carga_actual
-  / capacidad_peso)`). Un camión cargado consume y contamina más que uno
-  vacío recorriendo la misma distancia.
+- **Camión** — `km * factor_ambiental * (1 + carga_kg / capacidad_peso)`. Usa la carga. Un camión cargado consume y contamina más que uno vacío recorriendo la misma distancia; el factor crece según qué porcentaje de su capacidad va transportando.
 
-Las tres comparten la base lineal exigida por la regla 9, pero cada una le
-agrega (o no) un término distinto según la variable física relevante para ese
-tipo de vehículo — es lo que hace que la jerarquía se sostenga como
-especialización real, y no como tres clases con el mismo comportamiento.
+Las tres comparten la base lineal exigida por la regla 9, pero cada una agrega (o no) un término distinto según la variable física relevante para ese vehículo. Es lo que hace que la jerarquía se sostenga como especialización real y no como tres clases con el mismo comportamiento.
+
+`Itinerario.impacto()` invoca `self._transporte.calcular_impacto(distancia_total, carga_peso())` sin preguntar el tipo: el polimorfismo lo resuelve Python en tiempo de ejecución. Los métodos comunes a los tres vehículos (`tiempo_de_tramo`, `admite_carga`, `calcular_costo`) se implementan una sola vez en `Transporte` y se heredan.
 
 ## Criterio de variación entre políticas de ordenamiento
 
-`PoliticaDeOrdenamiento` es una clase abstracta (`ABC`) que define el contrato
-`sugerir_orden(deposito, solicitudes, matriz)`. Cualquier política concreta lo
-implementa a su manera, y por eso son intercambiables sin tocar el núcleo
-(regla 13). Se modelan dos, eligiendo qué criterio prioriza cada una al armar
-la sugerencia de recorrido:
+`PoliticaDeOrdenamiento` es una clase abstracta (`ABC`) que define el contrato `sugerir_orden(deposito, solicitudes, matriz)`. A diferencia de `Transporte`, el padre no comparte código: solo impone la firma, lo que la convierte en una interfaz. Cualquier política concreta lo implementa a su manera, y por eso son intercambiables sin tocar el núcleo (regla 13).
 
-- **VecinoMasCercano** — prioriza distancia. Empieza por la solicitud más
-  cercana al depósito y sigue eligiendo, en cada paso, la más cercana a la
-  última visitada. Intenta minimizar kilómetros recorridos ignorando las ventanas 
-  horarias.
-- **MenorVentanaPrimero** — prioriza urgencia. Ordena las solicitudes por el
-  fin de su ventana horaria, atendiendo primero las que cierran antes.
-  Ignora la distancia, pero reduce el riesgo de perder una ventana por
-  atender antes una entrega menos apremiante.
+- **VecinoMasCercano** — prioriza distancia. Empieza por la solicitud más cercana al depósito y sigue eligiendo, en cada paso, la más cercana a la última visitada. Minimiza kilómetros ignorando las ventanas horarias.
 
-Las dos cumplen el mismo contrato (mismo método, misma firma, mismo tipo de
-salida) pero priorizan variables opuestas: una minimiza distancia sin mirar
-tiempo, la otra respeta tiempo sin mirar distancia. Es lo que hace que sean
-comparables entre sí y que la abstracción `PoliticaDeOrdenamiento` tenga
-sentido — dos implementaciones que producen resultados distintos sobre la
-misma lista de solicitudes, sin modificar ningún viaje.
+- **MenorVentanaPrimero** — prioriza urgencia. Ordena las solicitudes por el fin de su ventana horaria, atendiendo primero las que cierran antes. Ignora la distancia y la matriz, pero respeta la firma del contrato.
+
+Ninguna de las dos modifica la lista recibida (vecino más cercano trabaja sobre una copia y `sorted` devuelve una lista nueva), ni marca solicitudes como asignadas, ni toca ningún viaje. Con una solicitud cercana pero de ventana laxa y otra lejana pero urgente, las dos producen órdenes opuestos sobre la misma lista.
+
+`Empresa.consultar_politica(politica, solicitudes)` recibe cualquier política y la usa sin saber cuál es.
+
+## Uso de diccionarios
+
+**Registros de `Empresa` indexados por identificador.** La flota, las solicitudes y los viajes se guardan como `{id: objeto}`:
+
+```python
+self._flota = {}         # {transporte_id: Transporte}
+self._viajes = {}        # {viaje_id: Viaje}
+self._solicitudes = {}   # {solicitud_id: Solicitud}
+```
+
+Esto resuelve dos cosas que pide la regla 1:
+
+- **Unicidad.** Toda operación de registro verifica primero `if id in registro` y, si ya existe, lanza `DatosInvalidos`. Un diccionario no admite dos claves iguales, así que la unicidad queda sostenida por la propia estructura.
+- **Consulta directa por id.** `buscar_solicitud(id)`, `buscar_transporte(id)` y `buscar_viaje(id)` indexan el diccionario en lugar de recorrer una lista.
+
+Las properties `flota`, `solicitudes` y `viajes` devuelven `list(registro.values())`: el resto del sistema sigue viendo listas y no depende de cómo están guardadas internamente.
+
+**Matriz de distancias.** `MatrizDistancias` guarda `{(origen, destino): km}`. La clave es una tupla de dos ubicaciones, lo que representa naturalmente una matriz dirigida: `(A, B)` y `(B, A)` son claves distintas. Por eso `Ubicacion` define `__eq__` y `__hash__` por id: dos ubicaciones con el mismo id producen la misma clave.
+
+**Reordenamiento.** `Itinerario.reordenar()` compara las solicitudes actuales y las propuestas como conjuntos, para detectar cuáles faltan o sobran, y arma un diccionario `{solicitud: parada}` para reconstruir la secuencia en el nuevo orden sin buscar cada parada en una lista.
+
+**Resumen del viaje.** `Viaje.resumen()` devuelve en un diccionario todos los resultados calculados del viaje (estado, distancia, carga, costo, impacto, entregas, incidentes). Es una consulta de solo lectura: cada llamada arma un diccionario nuevo y no altera el viaje.
+
+## Uso de `**kwargs`
+
+`Empresa.crear_solicitud(id, destino, ventana_inicio, ventana_fin, **articulos)` recibe cada artículo como un par `nombre=(peso, volumen)`:
+
+```python
+empresa.crear_solicitud("S1", u1, inicio, fin,
+                        libros=(60, 1.5),
+                        silla=(40, 2.0))
+```
+
+Dentro del método, `articulos` es el diccionario `{'libros': (60, 1.5), 'silla': (40, 2.0)}`. Se recorre con `.items()` para instanciar cada `Articulo`, cuyo id se genera como `"{id_solicitud}-{nombre}"` para mantener la unicidad sin que el código cliente tenga que inventarlo. Si un artículo no recibe una tupla de dos valores, se rechaza con `DatosInvalidos`.
+
+Con esto el código cliente construye una solicitud sin armar antes la lista de artículos (RN2). La vía general `registrar_solicitud(solicitud)` se conserva para los casos en que el nombre de un artículo no es un identificador válido de Python (por ejemplo, con espacios).
+
+## Respuesta a las decisiones de diseño
+
+**¿Qué objeto recorre la secuencia y conserva juntos los resultados coherentes?**
+`Itinerario`. Guarda la lista de paradas y la distancia total, y ambas cambian juntas en las mismas operaciones. `_calcular_distancia()` recorre la secuencia desde el depósito, suma cada tramo y cierra con el regreso (RN8). `Viaje` delega en él y nunca manipula esos datos por separado.
+
+**¿Cómo se representa una propuesta de cambio para validarla antes de reemplazar el itinerario?**
+Como una lista nueva de paradas (`propuesta`). `agregar`, `quitar` y `reordenar` construyen la propuesta, calculan su distancia (que falla con `RutaIncompleta` si falta un tramo) y verifican la capacidad (que falla con `CapacidadExcedida`) sin tocar el estado. Solo si todo pasa se asignan `self._paradas` y `self._distancia_total`. Si cualquier validación falla, el itinerario queda como estaba (RN7).
+
+**¿Los totales de carga se almacenan o se calculan? ¿Cómo se evita su desactualización?**
+Se calculan. `Solicitud.peso_total()` suma sus artículos; `Itinerario.carga_peso()` suma las solicitudes de sus paradas. Al no guardarse, no pueden quedar desactualizados. La distancia total sí se almacena, pero solo la escribe `Itinerario`, en la misma operación que cambia las paradas.
+
+**¿Cómo varía el impacto ambiental sin preguntar explícitamente el tipo de transporte?**
+Por polimorfismo. `calcular_impacto` es abstracto en `Transporte` y cada subclase lo redefine. `Itinerario.impacto()` lo invoca sobre el transporte que tenga, sin `if` ni `isinstance`.
+
+**¿Dónde se controlan el orden y los estados de las paradas?**
+El orden lo fija `Itinerario` al construir la secuencia, y lo renumera con `Parada.actualizar_orden()` al quitar o reordenar. El estado individual (`PENDIENTE`, `ENTREGADA`, `FALLIDA`) lo controla cada `Parada` en `entregar()` y `marcar_fallida()`, que rechazan resolverla dos veces. El respeto del orden planificado lo controla `Viaje`: solo acepta resolver la `parada_actual()`, la primera pendiente.
+
+**¿Cómo se distingue un cálculo consultivo de una transición operativa?**
+Las consultas (`costo()`, `impacto_ambiental()`, `distancia_total()`, `carga_peso()`, `es_factible()`, `esta_completo()`, `parada_actual()`, `resumen()`) devuelven un valor y no alteran nada. Las transiciones (`agregar_solicitud()`, `quitar_solicitud()`, `reordenar()`, `iniciar()`, `finalizar()`, `registrar_entrega()`, `registrar_fallo()`) validan precondiciones y lanzan una excepción propia si no se cumplen. Criterio práctico: si una operación puede fallar por el estado del sistema, es una transición.
+
+**¿Qué interfaz deben cumplir las políticas de ordenamiento para ser intercambiables?**
+`sugerir_orden(deposito, solicitudes, matriz) -> list`. Reciben todo por parámetro, no guardan estado entre llamadas, devuelven una lista con exactamente las mismas solicitudes y no modifican nada de lo recibido.
 
 ## Responsabilidades
 
-## Ubicación
+### Ubicación
 
-Representa un punto conocido de la matriz de distancias — puede ser el depósito o el destino de una solicitud.
+Representa un punto conocido de la matriz de distancias: puede ser el depósito o el destino de una solicitud.
 
 **Es responsable de:**
-- Guardar su identidad (id), nombre y descripción.
-- Definir cuándo dos ubicaciones son la misma (por id, no por ser el mismo objeto en memoria), para que pueda usarse como clave en la matriz de distancias.
+- Guardar su identidad (id), nombre y descripción, validando que id y nombre no estén vacíos.
+- Definir cuándo dos ubicaciones son la misma (por id, no por ser el mismo objeto en memoria), mediante `__eq__` y `__hash__`, para que pueda usarse como clave en la matriz de distancias.
 
 **No es responsable de:**
-- Calcular distancias o rutas — eso es trabajo exclusivo de MatrizDistancias.
-- Saber si es un depósito por defecto (una Ubicacion común siempre responde que no; solo Deposito responde que sí).
+- Calcular distancias o rutas; eso es trabajo exclusivo de `MatrizDistancias`.
+- Saber si es un depósito por defecto: una `Ubicacion` común siempre responde que no; solo `Deposito` responde que sí.
 
-## Deposito
+### Depósito
 
 Representa el punto especial del que sale y al que regresa todo viaje.
 
 **Es responsable de:**
-- Confirmar que efectivamente es un depósito (es_deposito() = True).
+- Confirmar que efectivamente es un depósito (`es_deposito()` devuelve `True`), redefiniendo el método del padre.
 
 **No es responsable de:**
-- Nada más. Hereda toda su identidad, comparación y representación de Ubicacion sin agregar ningún dato propio. Es una especialización de rol, no una entidad distinta.
+- Nada más. Hereda toda su identidad, comparación y representación de `Ubicacion` sin agregar ningún dato propio. Es una especialización de rol, no una entidad distinta, y pasa la prueba del "es un": un depósito es una ubicación.
 
-## Articulo
+### Artículo
 
 Representa una unidad de carga dentro de una solicitud.
 
 **Es responsable de:**
-- Guardar su peso y volumen.
+- Guardar su peso y volumen, validando que sean positivos.
 - Su propia identidad y comparación por id.
 
 **No es responsable de:**
-- Sumar totales. Un artículo ya es su propio peso y volumen; el total es un concepto que solo existe para un conjunto de artículos, y por eso vive en Solicitud.
-- Conocer su ventana horaria, su solicitud, ni el transporte que lo va a llevar.
+- Sumar totales. El total es un concepto que solo existe para un conjunto de artículos, y por eso vive en `Solicitud`.
+- Conocer su ventana horaria, su solicitud ni el transporte que lo va a llevar.
 
-## Ventana
+### Ventana
 
 Representa el rango horario dentro del cual se puede atender una solicitud.
 
 **Es responsable de:**
-- Determinar si un instante dado llega tarde respecto del cierre de la ventana.
-- Calcular a qué hora arranca realmente el servicio, considerando la espera si el transporte llega antes de que la ventana abra.
+- Determinar si un instante llega tarde respecto del cierre (`llega_tarde`). Llegar exactamente al fin es válido.
+- Calcular a qué hora arranca realmente el servicio, considerando la espera si el transporte llega antes de que la ventana abra (`inicio_de_servicio`, que devuelve el máximo entre la llegada y el inicio).
 
 **No es responsable de:**
-- Conocer la solicitud a la que pertenece, su destino, ni ningún otro dato de la entrega, solo maneja horarios.
+- Conocer la solicitud a la que pertenece ni ningún otro dato de la entrega; solo maneja horarios.
 
-## Solicitud
+### Solicitud
 
 Representa una entrega indivisible: un conjunto de artículos con un destino y una ventana horaria.
 
 **Es responsable de:**
-- Sus artículos, su destino y su ventana.
-- Saber si está actualmente asignada a algún viaje (esta_asignada()), y exponer los únicos dos métodos que pueden cambiar ese estado (marcar_como_asignada() / desmarcar_como_asignada()).
+- Sus artículos, su destino y su ventana, validando que no falte ninguno.
+- Calcular su peso y volumen totales a partir de sus artículos.
+- Delegar en su `Ventana` las preguntas horarias.
+- Saber si está asignada a algún viaje, y exponer los únicos métodos que cambian ese estado.
 
 **No es responsable de:**
-- Definir su posición dentro de un viaje, eso lo decide Viaje/Itinerario.
-- Saber a qué viaje pertenece. Deliberadamente no guarda una referencia al viaje, solo un indicador de sí/no, para mantener bajo el acoplamiento entre ambas clases.
+- Definir su posición dentro de un viaje; eso lo decide `Itinerario`.
+- Saber a qué viaje pertenece. No guarda una referencia al viaje, solo un indicador de sí/no, para mantener bajo el acoplamiento.
+- Verificar que su id sea único en el sistema: una solicitud no ve a las demás, así que esa regla vive en `Empresa`.
 
-## Transporte (y sus subtipos Motocicleta, Furgoneta, Camion)
+**Decisión de diseño (RN5):** al finalizar un viaje, las solicitudes no se desmarcan. El indicador queda en `True` para siempre, de modo que un intento posterior de agregarlas a otro viaje sea rechazado. Así se garantiza que una solicitud entregada no vuelva a planificarse. Al quitar una solicitud de un viaje planificado, en cambio, sí se desmarca y queda disponible.
 
-Representa un vehículo disponible para hacer entregas. Es una clase abstracta: "un transporte" a secas no existe, siempre es uno de sus tres subtipos concretos.
+### Transporte (y sus subtipos Motocicleta, Furgoneta, Camión)
+
+Representa un vehículo disponible para hacer entregas. Es una clase abstracta: "un transporte" a secas no existe, siempre es uno de sus tres subtipos.
 
 **Es responsable de:**
-- Sus capacidades, velocidad, costos y factor ambiental.
-- Calcular su propio costo de un recorrido (igual para los tres subtipos).
-- Calcular su propio impacto ambiental, con una fórmula distinta según el subtipo: Furgoneta es lineal pura, Motocicleta suma un costo fijo de arranque en frío, y Camion multiplica según qué porcentaje de su capacidad va cargando.
+- Sus capacidades, velocidad, costos y factor ambiental, validando sus magnitudes.
+- Tres comportamientos iguales para todos los subtipos, implementados una sola vez en el padre y heredados: `tiempo_de_tramo`, `admite_carga` (ambos límites, inclusivos) y `calcular_costo` (RN8).
+- Calcular su propio impacto ambiental, con una fórmula distinta según el subtipo.
 
 **No es responsable de:**
-- Elegir qué solicitudes llevar ni decidir rutas, eso es de Viaje, Itinerario y las políticas de ordenamiento.
+- Elegir qué solicitudes llevar ni decidir rutas; eso es de `Viaje`, `Itinerario` y las políticas.
 
-## MatrizDistancias
+### MatrizDistancias
 
-Representa la tabla de distancias conocidas entre ubicaciones, en un sentido dirigido.
+Representa la tabla de distancias conocidas entre ubicaciones, en sentido dirigido.
 
 **Es responsable de:**
-- Guardar y devolver la distancia entre un origen y un destino.
-- Avisar si falta un tramo, sin que el resto del sistema necesite saber cómo está indexada internamente.
+- Guardar y devolver la distancia entre un origen y un destino, rechazando distancias negativas.
+- Lanzar `RutaIncompleta` si falta un tramo, sin que el resto del sistema necesite saber cómo está indexada internamente.
 
 **No es responsable de:**
-- Calcular distancias nuevas (son datos de entrada, no un cálculo geométrico), ni de saber nada sobre horarios o transportes.
+- Calcular distancias nuevas: son datos de entrada, no un cálculo geométrico.
+- Saber nada sobre horarios o transportes.
 
-## Itinerario
+### Itinerario
 
-Representa el cálculo de una secuencia candidata de paradas, recorrida desde el depósito.
+Representa la secuencia de paradas de un viaje, recorrida desde el depósito.
 
 **Es responsable de:**
-- Recorrer la secuencia y calcular, de forma coherente, horarios de llegada/salida y distancia total.
-- Determinar si esa secuencia es factible (respeta capacidad y ventanas).
+- Recorrer la secuencia y calcular la distancia total, incluido el regreso al depósito.
+- Validar la regla 5 (solicitud no asignada ni repetida), los tramos de la matriz y la capacidad antes de aceptar cada cambio.
+- Garantizar que agregar, quitar o reordenar sea atómico: primero valida la propuesta completa, después la aplica.
+- Renumerar las paradas al quitar o reordenar.
+- Calcular costo e impacto delegando en el transporte.
 
 **No es responsable de:**
-- Confirmar nada de forma permanente — es un objeto transitorio, descartable, que solo sirve para validar una propuesta antes de que Viaje decida adoptarla o no.
 - Conocer el estado del viaje ni sus incidentes.
+- Decidir si una modificación está permitida por el estado del viaje; eso lo controla `Viaje` antes de delegarle el cambio.
 
-## Parada
+### Parada
 
-Representa la visita a una solicitud dentro de un viaje ya en curso.
+Representa la visita a una solicitud dentro de un viaje. Se crea al planificar y se resuelve durante la ejecución.
 
 **Es responsable de:**
-- Su orden, su llegada prevista y su resultado (pendiente, entregada o fallida).
+- Su orden, su llegada prevista y su resultado. Nace siempre `PENDIENTE`.
+- Resolverse una sola vez: `entregar()` la marca `ENTREGADA` y guarda receptor y fecha; `marcar_fallida()` la marca `FALLIDA` y guarda el incidente. Ambos rechazan una parada ya resuelta con `TransicionIlegal`.
 
 **No es responsable de:**
-- Reutilizarse en otro viaje — nace y muere con ese viaje puntual.
-- Decidir si el viaje entero es factible — esa es una pregunta que responde Itinerario sobre el conjunto, no cada parada por separado.
+- Reutilizarse en otro viaje: nace y muere con ese viaje puntual.
+- Fabricar el comprobante; eso lo hace `Viaje`.
+- Controlar que se respete el orden planificado; eso lo hace `Viaje`.
 
-## Viaje
+### Viaje
 
 Representa una secuencia planificada de entregas para una fecha, con un transporte y un depósito fijos.
 
 **Es responsable de:**
-- Su transporte, depósito, secuencia de paradas, estado, incidentes y comprobantes.
-- Ser el único que puede modificar esa secuencia — y solo a través de métodos que validan primero (agregar_solicitud, quitar_solicitud, reordenar), nunca por acceso directo a sus listas internas.
-- Controlar sus propias transiciones de estado (PLANIFICADO → EN_CURSO → FINALIZADO), siempre naciendo en PLANIFICADO.
+- Su identidad, fecha, estado, comprobantes e incidentes.
+- Ser el único punto por el que se modifica la secuencia, siempre a través de métodos que validan primero, y solo mientras está `PLANIFICADO`.
+- Controlar sus transiciones de estado: nace `PLANIFICADO`; `iniciar()` exige al menos una parada y un itinerario factible; `finalizar()` exige estar `EN_CURSO` y que todas las paradas tengan resultado.
+- Registrar entregas y fallos respetando el orden planificado: solo acepta resolver la primera parada pendiente.
+- Fabricar el comprobante **antes** de cerrar la parada: si el receptor es vacío, el comprobante no se construye y la parada queda intacta.
+- Exponer un resumen de sus resultados como diccionario de solo lectura.
 
 **No es responsable de:**
-- Calcular la geometría de una ruta por su cuenta — delega ese cálculo en Itinerario y en MatrizDistancias.
-- Decidir qué orden sugerir para las solicitudes — eso es trabajo de las políticas de ordenamiento, y es opcional consultarlas.
+- Calcular la geometría de una ruta; delega en `Itinerario` y `MatrizDistancias`.
+- Decidir qué orden sugerir; eso es trabajo opcional de las políticas.
 
-## Comprobante
+### Comprobante
 
 Representa la evidencia de que una entrega se realizó.
 
 **Es responsable de:**
-- Guardar la solicitud entregada, la fecha real y el receptor.
+- Guardar un número positivo, la solicitud entregada, la fecha y hora reales y el receptor, validando que ninguno falte y que el receptor no esté vacío (RN11).
 
 **No es responsable de:**
-- Existir para un intento fallido — solo se genera cuando una parada termina entregada.
+- Existir para un intento fallido: solo se genera desde `Viaje.registrar_entrega()`.
 
-## Incidente
+### Incidente
 
 Representa un problema ocurrido durante el viaje.
 
 **Es responsable de:**
-- Su tipo, descripción, instante, y la entidad afectada (una solicitud o el transporte).
+- Su tipo (validado contra `TipoIncidente`), descripción no vacía, instante y entidad afectada.
 
 **No es responsable de:**
-- Cambiar por sí solo la planificación del viaje — registrar un incidente es un hecho que se deja asentado, no una acción que dispare cambios automáticos.
+- Cambiar por sí solo la planificación del viaje: registrar un incidente es dejar un hecho asentado, no disparar cambios automáticos.
 
-## PoliticaDeOrdenamiento (y sus subtipos VecinoMasCercano, MenorVentanaPrimero)
+### PoliticaDeOrdenamiento (y sus subtipos VecinoMasCercano, MenorVentanaPrimero)
 
 Representa una estrategia para sugerir un orden de solicitudes. Es abstracta: cada política concreta define su propio criterio.
 
 **Es responsable de:**
-- Recibir un depósito, una lista de solicitudes y la matriz de distancias, y devolver un orden sugerido.
+- Recibir un depósito, una lista de solicitudes y la matriz, y devolver un orden sugerido en una lista nueva.
 
 **No es responsable de:**
-- Modificar ningún viaje.
-- Confirmar asignaciones ni garantizar que el orden sugerido sea factible (eso lo valida Itinerario si el operador decide aplicarlo).
+- Modificar ningún viaje ni la lista recibida.
+- Confirmar asignaciones ni garantizar que el orden sea factible; eso lo valida `Itinerario` si el operador decide aplicarlo.
 
-## Empresa
+### Empresa
 
-Representa el punto de entrada del dominio — separa la lógica de negocio del punto de arranque del programa (main.py).
+Representa el registro central del dominio y su punto de acceso desde `main.py`.
 
 **Es responsable de:**
-- Guardar el depósito y la matriz de distancias de la empresa.
-- Registrar transportes y solicitudes, y ser la única que puede crear viajes nuevos (a través de crear_viaje, que garantiza que todo viaje se arme con el depósito y la matriz correctos).
-- Delegar en una política de ordenamiento cuando se le pide una sugerencia, sin necesitar saber cuál es.
+- Guardar el depósito y la matriz de distancias.
+- Mantener los registros de transportes, solicitudes y viajes indexados por id, y garantizar su unicidad (RN1): es la única clase que ve todos juntos.
+- Consultar cualquiera de ellos directamente por id.
+- Crear solicitudes a partir de artículos pasados como `**kwargs`.
+- Ser la única que crea viajes nuevos (`crear_viaje`), garantizando que se armen con el depósito y la matriz correctos.
+- Delegar en una política de ordenamiento cuando se le pide una sugerencia, sin saber cuál es.
 
 **No es responsable de:**
-- Calcular rutas o resultados de entregas por su cuenta — todo eso es trabajo de Viaje y sus colaboradores.
+- Calcular rutas o resultados de entregas; todo eso es trabajo de `Viaje` y sus colaboradores.
 
+## Pruebas
+
+Las pruebas están en `tests/`, una por clase, y se corren con:
+
+```
+pytest
+```
