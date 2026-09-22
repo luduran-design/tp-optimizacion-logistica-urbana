@@ -62,3 +62,75 @@ class TestConsultarDistancia:
         m.agregar_tramo(d, u1, 5.0)
         m.agregar_tramo(d, u1, 8.0)
         assert m.distancia(d, u1) == 8.0
+class TestUbicacionesConocidas:
+    """La matriz conoce sus ubicaciones (regla 1: ids unicos; regla 3: tramos solo
+    entre ubicaciones conocidas)."""
+
+    def test_ubicaciones_duplicadas_lanzan_error(self):
+        d = Deposito("D1", "Central", "")
+        repetida = Ubicacion("D1", "Otra con el mismo id", "")
+        with pytest.raises(DatosInvalidos, match="duplicada"):
+            MatrizDistancias([d, repetida])
+
+    def test_ubicaciones_devuelve_las_cargadas(self):
+        m, d, u1, u2 = _matriz_con_ubicaciones()
+        assert m.ubicaciones == [d, u1, u2]
+
+    def test_ubicaciones_devuelve_copia_defensiva(self):
+        m, d, u1, u2 = _matriz_con_ubicaciones()
+        m.ubicaciones.clear()
+        assert m.ubicaciones == [d, u1, u2]
+
+    def test_contiene_ubicacion(self):
+        m, d, _, _ = _matriz_con_ubicaciones()
+        assert m.contiene_ubicacion(d) is True
+        assert m.contiene_ubicacion(Ubicacion("U99", "Desconocida", "")) is False
+
+    def test_agregar_tramo_con_ubicacion_desconocida_lanza_error(self):
+        m, d, _, _ = _matriz_con_ubicaciones()
+        desconocida = Ubicacion("U99", "Desconocida", "")
+        with pytest.raises(DatosInvalidos, match="no pertenece"):
+            m.agregar_tramo(d, desconocida, 5.0)
+        with pytest.raises(DatosInvalidos, match="no pertenece"):
+            m.agregar_tramo(desconocida, d, 5.0)
+
+
+class TestDistanciaASiMisma:
+    """Regla 3: la distancia entre una ubicacion y si misma es cero."""
+
+    def test_distancia_a_si_misma_es_cero_sin_cargarla(self):
+        m, d, u1, _ = _matriz_con_ubicaciones()
+        assert m.distancia(d, d) == 0.0
+        assert m.distancia(u1, u1) == 0.0
+
+    def test_contiene_tramo_a_si_misma_es_true(self):
+        m, d, _, _ = _matriz_con_ubicaciones()
+        assert m.contiene_tramo(d, d) is True
+
+    def test_cargar_tramo_a_si_misma_distinto_de_cero_lanza_error(self):
+        m, d, _, _ = _matriz_con_ubicaciones()
+        with pytest.raises(DatosInvalidos, match="si misma"):
+            m.agregar_tramo(d, d, 5.0)
+
+    def test_cargar_tramo_a_si_misma_en_cero_es_valido(self):
+        m, d, _, _ = _matriz_con_ubicaciones()
+        m.agregar_tramo(d, d, 0)
+        assert m.distancia(d, d) == 0.0
+
+
+class TestMatrizDirigida:
+    """Regla 3: los tramos se definen en el sentido recorrido."""
+
+    def test_distancia_en_sentido_contrario_lanza_ruta_incompleta(self):
+        m, d, u1, _ = _matriz_con_ubicaciones()
+        m.agregar_tramo(d, u1, 5.0)
+        assert m.distancia(d, u1) == 5.0
+        with pytest.raises(RutaIncompleta):
+            m.distancia(u1, d)
+
+    def test_ida_y_vuelta_pueden_tener_distancias_distintas(self):
+        m, d, u1, _ = _matriz_con_ubicaciones()
+        m.agregar_tramo(d, u1, 5.0)
+        m.agregar_tramo(u1, d, 7.0)
+        assert m.distancia(d, u1) == 5.0
+        assert m.distancia(u1, d) == 7.0
