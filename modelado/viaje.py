@@ -2,6 +2,9 @@ from modelado.enums import EstadoViaje
 from modelado.excepciones import TransicionIlegal, DatosInvalidos
 from modelado.itinerario import Itinerario
 from modelado.comprobante import Comprobante
+from modelado.incidente import Incidente
+from modelado.solicitud import Solicitud
+from modelado.transporte import Transporte
 
 
 class Viaje:
@@ -161,10 +164,42 @@ class Viaje:
                 "Solo se pueden registrar fallos en estado EN_CURSO"
             )
         parada = self._parada_para(solicitud)
+        # Regla 11: una parada fallida exige un incidente, y ese incidente tiene
+        # que estar vinculado a la entrega afectada (la solicitud) o al transporte.
+        # Se valida ANTES de cerrar la parada: si falla, no queda estado sucio.
+        self._exigir_incidente_del_viaje(incidente)
+        afectado = incidente.afectado
+        if incidente.afecta_a_solicitud() and afectado != solicitud:
+            raise DatosInvalidos(
+                f"El incidente {incidente.id} afecta a {afectado.id}, "
+                f"no a la solicitud {solicitud.id} que fallo"
+            )
         parada.marcar_fallida(incidente)
-        self.registrar_incidente(incidente)
+        self._incidentes.append(incidente)
+
+    # --- Incidentes (regla 12) ---
+
+    def _exigir_incidente_del_viaje(self, incidente) -> None:
+        """Regla 12: el incidente debe ser un Incidente y su afectado debe ser
+        una solicitud de este viaje o el transporte de este viaje."""
+        if not isinstance(incidente, Incidente):
+            raise DatosInvalidos(f"Se esperaba un Incidente, no {incidente!r}")
+        afectado = incidente.afectado
+        if isinstance(afectado, Transporte):
+            if afectado != self._itinerario.transporte:
+                raise DatosInvalidos(
+                    f"El transporte {afectado.id} no es el de este viaje"
+                )
+        elif isinstance(afectado, Solicitud):
+            if all(p.solicitud != afectado for p in self._itinerario.paradas):
+                raise DatosInvalidos(
+                    f"La solicitud {afectado.id} no pertenece a este viaje"
+                )
 
     def registrar_incidente(self, incidente):
+        """Deja asentado un incidente del viaje sin cambiar el resultado de
+        ninguna parada (regla 12: registrar no dispara cambios automaticos)."""
+        self._exigir_incidente_del_viaje(incidente)
         self._incidentes.append(incidente)
 
     # --- Consulta (dict): todo lo calculado de un viaje en un solo lugar ---

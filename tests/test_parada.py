@@ -82,8 +82,9 @@ class TestDatosDeCierre:
         assert p.fecha_hora_real == 20
 
     def test_marcar_fallida_guarda_incidente(self):
-        p = Parada(1, _solicitud_basica(), 10)
-        i = Incidente("I1", TipoIncidente.RETRASO, 15, "trafico", None)
+        s = _solicitud_basica()
+        p = Parada(1, s, 10)
+        i = Incidente("I1", TipoIncidente.RETRASO, 15, "trafico", s)
         p.marcar_fallida(i)
         assert p.incidente is i
 
