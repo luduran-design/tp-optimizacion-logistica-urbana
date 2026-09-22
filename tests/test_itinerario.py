@@ -275,3 +275,73 @@ class TestFactibilidad:
         it = _itinerario_con_furgoneta_grande(d, matriz)
         it.agregar(_solicitud_liviana("S1", u1, peso=2.0))
         assert it.es_factible() is True
+
+# ============================================================
+# Regla 2: el destino de una solicitud no puede ser el deposito
+# ============================================================
+
+class TestDestinoNoEsDeposito:
+    def test_agregar_solicitud_con_destino_deposito_lanza_error(self):
+        d, _, _, matriz = _escenario_basico()
+        it = _itinerario_con_furgoneta_grande(d, matriz)
+        s = _solicitud_liviana("S1", d)
+        with pytest.raises(DatosInvalidos, match="deposito"):
+            it.agregar(s)
+
+    def test_rechazo_no_deja_rastro(self):
+        # Regla 7: si falla, ni paradas, ni distancia, ni la solicitud cambian.
+        d, _, _, matriz = _escenario_basico()
+        it = _itinerario_con_furgoneta_grande(d, matriz)
+        s = _solicitud_liviana("S1", d)
+        with pytest.raises(DatosInvalidos):
+            it.agregar(s)
+        assert it.paradas == []
+        assert it.distancia_total == 0.0
+        assert s.esta_asignada() is False
+
+    def test_ubicacion_comun_con_el_id_del_deposito_tambien_se_rechaza(self):
+        # Ubicacion se compara por id: una Ubicacion "D1" ES el deposito D1.
+        d, _, _, matriz = _escenario_basico()
+        it = _itinerario_con_furgoneta_grande(d, matriz)
+        disfrazada = Ubicacion(d.id, "Otro nombre", "")
+        s = _solicitud_liviana("S1", disfrazada)
+        with pytest.raises(DatosInvalidos, match="deposito"):
+            it.agregar(s)
+
+
+# ============================================================
+# Reordenar: misma cantidad, sin repetidas ni faltantes
+# ============================================================
+
+class TestReordenarSinRepetidos:
+    def _con_dos(self):
+        d, u1, u2, matriz = _escenario_basico()
+        it = _itinerario_con_furgoneta_grande(d, matriz)
+        s1 = _solicitud_liviana("S1", u1, peso=2.0)
+        s2 = _solicitud_liviana("S2", u2, peso=2.0)
+        it.agregar(s1)
+        it.agregar(s2)
+        return it, s1, s2
+
+    def test_secuencia_con_repetidas_lanza_error(self):
+        # [s1, s1] tiene el largo correcto pero le falta s2: lo atrapa la
+        # comparacion por conjuntos. [s1, s1, s2] lo atrapa el chequeo de largo.
+        it, s1, s2 = self._con_dos()
+        with pytest.raises(DatosInvalidos):
+            it.reordenar([s1, s1])
+        with pytest.raises(DatosInvalidos, match="repetidas"):
+            it.reordenar([s1, s1, s2])
+        assert [p.solicitud for p in it.paradas] == [s1, s2]
+
+    def test_secuencia_con_faltantes_lanza_error(self):
+        it, s1, s2 = self._con_dos()
+        with pytest.raises(DatosInvalidos):
+            it.reordenar([s2])
+        assert [p.solicitud for p in it.paradas] == [s1, s2]
+
+    def test_secuencia_con_una_ajena_lanza_error(self):
+        it, s1, s2 = self._con_dos()
+        ajena = _solicitud_liviana("S99", Ubicacion("U99", "x", ""))
+        with pytest.raises(DatosInvalidos, match="Sobran"):
+            it.reordenar([s1, ajena])
+        assert [p.solicitud for p in it.paradas] == [s1, s2]

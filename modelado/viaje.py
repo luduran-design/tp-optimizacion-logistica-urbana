@@ -9,6 +9,9 @@ from modelado.transporte import Transporte
 
 class Viaje:
     def __init__(self, id_viaje, fecha, transporte, deposito, matriz, hora_salida):
+        # Regla 1: los ids de viaje son no vacios (la unicidad la garantiza Empresa).
+        if not isinstance(id_viaje, str) or not id_viaje.strip():
+            raise DatosInvalidos("El id del viaje debe ser un texto no vacio")
         self._id = id_viaje
         self._fecha = fecha
         self._estado = EstadoViaje.PLANIFICADO

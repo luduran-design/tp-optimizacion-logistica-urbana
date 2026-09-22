@@ -590,3 +590,28 @@ class TestResumen:
         r1["estado"] = "ROTO"
         r2 = v.resumen()
         assert r2["estado"] == "PLANIFICADO"
+
+# ============================================================
+# Validacion del constructor (regla 1)
+# ============================================================
+
+class TestValidacionViaje:
+    def _armar(self, id_viaje):
+        d, _, _, matriz = _matriz_completa()
+        t = Furgoneta("F1", 1000, 5.0, 60, 200, 50, 0.27)
+        return Viaje(id_viaje, "2026-09-07", t, d, matriz, 8)
+
+    def test_id_valido_construye(self):
+        assert self._armar("V1").id == "V1"
+
+    def test_id_vacio_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="id"):
+            self._armar("")
+
+    def test_id_solo_espacios_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="id"):
+            self._armar("   ")
+
+    def test_id_none_lanza_error(self):
+        with pytest.raises(DatosInvalidos, match="id"):
+            self._armar(None)
