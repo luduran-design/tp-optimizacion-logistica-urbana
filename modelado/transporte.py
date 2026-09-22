@@ -15,8 +15,12 @@ class Transporte(ABC):
 
     def __init__(self, id, capacidad_peso, capacidad_volumen, velocidad_media,
                  costo_por_km, costo_por_parada, factor_ambiental):
-        if not id:
-            raise DatosInvalidos("El id del transporte no puede ser vacio")
+        if not isinstance(id, str) or not id.strip():
+            raise DatosInvalidos("El id del transporte debe ser un texto no vacio.")
+        for valor in (capacidad_peso, capacidad_volumen, velocidad_media,
+                  costo_por_km, costo_por_parada, factor_ambiental):
+            if isinstance(valor, bool) or not isinstance(valor, (int, float)):
+                raise DatosInvalidos("Capacidades, velocidad, costos y factor deben ser numeros.")
         if capacidad_peso <= 0:
             raise DatosInvalidos("La capacidad de peso debe ser positiva")
         if capacidad_volumen <= 0:
@@ -75,7 +79,7 @@ class Transporte(ABC):
         return hash(self._id)
 
     def __repr__(self):
-        return f"Transporte('{self._id}')"
+        return f"{type(self).__name__}({self._id!r})"
 
     # Abstracto: cada subtipo DEBE definir su propia formula de impacto (regla 9).
     @abstractmethod

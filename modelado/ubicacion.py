@@ -9,10 +9,12 @@ class Ubicacion:
     """
 
     def __init__(self, id, nombre, descripcion):
-        if not id:
-            raise DatosInvalidos("El id de la ubicacion no puede ser vacio.")
-        if not nombre:
-            raise DatosInvalidos("El nombre de la ubicacion no puede ser vacio.")
+        if not isinstance(id, str) or not id.strip():
+            raise DatosInvalidos("El id de la ubicacion debe ser un texto no vacio.")
+        if not isinstance(nombre, str) or not nombre.strip():
+            raise DatosInvalidos("El nombre de la ubicacion debe ser un texto no vacio.")
+        if descripcion is not None and not isinstance(descripcion, str):
+            raise DatosInvalidos("La descripcion debe ser un texto.")
         self._id = id
         self._nombre = nombre
         self._descripcion = descripcion
@@ -41,9 +43,8 @@ class Ubicacion:
         return hash(self._id)
 
     def __repr__(self):
-        # Representacion legible: en errores y tests se ve Ubicacion('U1') en vez de
-        # <Ubicacion object at 0x...>.
-        return f"Ubicacion('{self._id}')"
+        # type(self).__name__ usa el nombre de la clase real, asi un Deposito se muestra como Deposito('D1').
+        return f"{type(self).__name__}({self._id!r})"
 
     def es_deposito(self) -> bool:
         return False

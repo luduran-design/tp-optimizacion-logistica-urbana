@@ -9,14 +9,15 @@ class Articulo:
     """
 
     def __init__(self, id, nombre, peso, volumen):
-        if not id:
-            raise DatosInvalidos("El id del articulo no puede ser vacio")
-        if not nombre:
-            raise DatosInvalidos("El nombre del articulo no puede ser vacio")
-        if peso <= 0:
-            raise DatosInvalidos("El peso del articulo debe ser positivo")
-        if volumen <= 0:
-            raise DatosInvalidos("El volumen del articulo debe ser positivo")
+        if not isinstance(id, str) or not id.strip():
+            raise DatosInvalidos("El id del articulo debe ser un texto no vacio.")
+        if not isinstance(nombre, str) or not nombre.strip():
+            raise DatosInvalidos("El nombre del articulo debe ser un texto no vacio.")
+        for valor in (peso, volumen):
+            if isinstance(valor, bool) or not isinstance(valor, (int, float)):
+                raise DatosInvalidos("Peso y volumen deben ser numeros.")
+            if valor <= 0:
+                raise DatosInvalidos("Peso y volumen deben ser positivos.")
         self._id = id
         self._nombre = nombre
         self._peso = peso

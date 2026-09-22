@@ -1,4 +1,7 @@
-from modelado.excepciones import DatosInvalidos
+from modelado.excepciones import DatosInvalidos, TransicionIlegal
+from modelado.ubicacion import Ubicacion
+from modelado.ventana import Ventana
+from modelado.articulo import Articulo
 
 
 class Solicitud:
@@ -10,19 +13,21 @@ class Solicitud:
     """
 
     def __init__(self, id, destino, ventana, articulos):
-        if not id:
-            raise DatosInvalidos("El id de la solicitud no puede ser vacio")
-        if destino is None:
-            raise DatosInvalidos("La solicitud debe tener un destino")
-        # is None en vez de not: preguntamos si falta el objeto, no su valor de verdad.
-        if ventana is None:
-            raise DatosInvalidos("La solicitud debe tener una ventana horaria")
-        if not articulos:
-            raise DatosInvalidos("La solicitud debe tener al menos un articulo")
+        if not isinstance(id, str) or not id.strip():
+            raise DatosInvalidos("El id de la solicitud debe ser un texto no vacio.")
+        # isinstance tambien rechaza None, asi que reemplaza al chequeo de is None.
+        if not isinstance(destino, Ubicacion):
+            raise DatosInvalidos("El destino debe ser una Ubicacion.")
+        if not isinstance(ventana, Ventana):
+            raise DatosInvalidos("La ventana debe ser una Ventana.")
+        if not isinstance(articulos, (list, tuple)) or not articulos:
+            raise DatosInvalidos("La solicitud debe tener una lista con al menos un articulo.")
+        for a in articulos:
+            if not isinstance(a, Articulo):
+                raise DatosInvalidos("Todos los elementos de articulos deben ser Articulo.")
         self._id = id
         self._destino = destino
         self._ventana = ventana
-        # Copia defensiva: si quien nos paso la lista despues la muta, no nos afecta.
         self._articulos = list(articulos)
         self._asignada = False
 
@@ -73,7 +78,11 @@ class Solicitud:
         return self._asignada
 
     def marcar_como_asignada(self):
+        if self._asignada:
+            raise TransicionIlegal(f"La solicitud {self._id} ya esta asignada.")
         self._asignada = True
 
     def desmarcar_como_asignada(self):
+        if not self._asignada:
+            raise TransicionIlegal(f"La solicitud {self._id} no esta asignada.")
         self._asignada = False
