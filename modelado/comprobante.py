@@ -1,5 +1,5 @@
 from modelado.excepciones import DatosInvalidos
-
+from datetime import datetime
 
 class Comprobante:
     """Comprobante de entrega: registra quien recibio una solicitud, cuando, y bajo que numero.
@@ -16,8 +16,8 @@ class Comprobante:
             )
         if solicitud is None:
             raise DatosInvalidos("El comprobante debe tener una solicitud")
-        if fecha_hora_real is None:
-            raise DatosInvalidos("El comprobante debe tener una fecha y hora reales")
+        if not isinstance(fecha_hora_real, datetime):
+            raise DatosInvalidos("La fecha y hora del incidente debe ser un datetime")
         if not receptor:
             raise DatosInvalidos(
                 "El receptor del comprobante no puede estar vacio"
