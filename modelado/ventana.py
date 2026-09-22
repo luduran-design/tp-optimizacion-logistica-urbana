@@ -1,17 +1,15 @@
 from modelado.excepciones import DatosInvalidos
-
+from datetime import datetime
 
 # Ventana concentra la logica de horarios (inicio/fin). llega_tarde y inicio_de_servicio se
 # mudaron aca desde Articulo, que no debe saber de tiempos segun las reglas.
 class Ventana:
     def __init__(self, inicio, fin):
-        for valor in (inicio, fin):
-            if isinstance(valor, bool) or not isinstance(valor, (int, float)):
-                raise DatosInvalidos("Inicio y fin de la ventana deben ser numeros.")
-            if valor < 0:
-                raise DatosInvalidos("Inicio y fin de la ventana no pueden ser negativos.")
-        if inicio >= fin:
-            raise DatosInvalidos("El inicio de la ventana debe ser anterior al fin.")
+        if not isinstance(inicio, datetime) or not isinstance(fin, datetime):
+            raise DatosInvalidos("Inicio y fin de la ventana deben ser datetime.")
+        # Regla 2: inicio anterior o igual al fin (una ventana de un solo instante es valida).
+        if inicio > fin:
+            raise DatosInvalidos("El inicio de la ventana no puede ser posterior al fin.")
         self._inicio = inicio
         self._fin = fin
 

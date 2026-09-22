@@ -1,5 +1,5 @@
 from modelado.excepciones import DatosInvalidos, RutaIncompleta
-
+from modelado.ubicacion import Ubicacion
 
 class MatrizDistancias:
     """Tabla dirigida de distancias en km entre ubicaciones conocidas (regla 3).
@@ -14,6 +14,8 @@ class MatrizDistancias:
     def __init__(self, ubicaciones):
         self._ubicaciones = {}   # {id: Ubicacion}
         for u in ubicaciones:
+            if not isinstance(u, Ubicacion):
+                raise DatosInvalidos(f"Elemento invalido en la matriz: {u!r}")
             if u.id in self._ubicaciones:
                 raise DatosInvalidos(f"Ubicacion duplicada en la matriz: '{u.id}'")
             self._ubicaciones[u.id] = u
@@ -24,15 +26,19 @@ class MatrizDistancias:
         return list(self._ubicaciones.values())
 
     def contiene_ubicacion(self, ubicacion) -> bool:
-        return ubicacion.id in self._ubicaciones
+        # Si no es una Ubicacion, directamente no pertenece.
+        return isinstance(ubicacion, Ubicacion) and ubicacion.id in self._ubicaciones
+
 
     def _exigir_conocida(self, ubicacion) -> None:
         if not self.contiene_ubicacion(ubicacion):
             raise DatosInvalidos(f"La ubicacion {ubicacion!r} no pertenece a la matriz")
-
+        
     def agregar_tramo(self, origen, destino, km) -> None:
         self._exigir_conocida(origen)
         self._exigir_conocida(destino)
+        if isinstance(km, bool) or not isinstance(km, (int, float)):
+            raise DatosInvalidos("La distancia debe ser un numero.")
         if km < 0:
             raise DatosInvalidos("La distancia no puede ser negativa")
         if origen == destino and km != 0:

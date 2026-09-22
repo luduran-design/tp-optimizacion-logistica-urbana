@@ -1,5 +1,10 @@
 from abc import ABC, abstractmethod
 
+from modelado.excepciones import DatosInvalidos
+from modelado.deposito import Deposito
+from modelado.matriz_distancias import MatrizDistancias
+from modelado.solicitud import Solicitud
+
 
 class PoliticaDeOrdenamiento(ABC):
     # Politica abstracta (ABC): define el "contrato" que toda politica debe cumplir para
@@ -11,12 +16,24 @@ class PoliticaDeOrdenamiento(ABC):
     def sugerir_orden(self, deposito, solicitudes, matriz):
         pass
 
+@staticmethod
+def _validar_entrada(deposito, solicitudes, matriz):
+    if not isinstance(deposito, Deposito):
+        raise DatosInvalidos("El deposito debe ser un Deposito.")
+    if not isinstance(matriz, MatrizDistancias):
+        raise DatosInvalidos("La matriz debe ser una MatrizDistancias.")
+    if not isinstance(solicitudes, (list, tuple)):
+        raise DatosInvalidos("Las solicitudes deben ser una lista.")
+    for s in solicitudes:
+        if not isinstance(s, Solicitud):
+            raise DatosInvalidos("La lista solo puede contener Solicitud.")
 
 class MenorVentanaPrimero(PoliticaDeOrdenamiento):
        # MenorVentanaPrimero: ordena por la ventana horaria que cierra antes
     # (las mas urgentes primero). Es la segunda politica intercambiable exigida por la
     # regla 13.
     def sugerir_orden(self, deposito, solicitudes, matriz):
+        self._validar_entrada(deposito, solicitudes, matriz)
         return sorted(solicitudes, key=lambda s: s.ventana.fin)
 
 
@@ -25,6 +42,7 @@ class VecinoMasCercano(PoliticaDeOrdenamiento):
     # siguiendo por la mas cercana a la anterior. Criterio distinto a MenorVentanaPrimero
     # (regla 13 pide 2 politicas que ordenen distinto).
     def sugerir_orden(self, deposito, solicitudes, matriz):
+        self._validar_entrada(deposito, solicitudes, matriz)
         pendientes = list(solicitudes)
         ordenadas = []
         actual = deposito

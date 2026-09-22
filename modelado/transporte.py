@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 # ABC + abstractmethod: permiten declarar clases "molde" que no se pueden instanciar solas
 # y obligan a las subclases a implementar ciertos metodos.
-
+from datetime import timedelta
 from modelado.excepciones import DatosInvalidos
 
 
@@ -92,7 +92,8 @@ class Transporte(ABC):
     # Estos 3 metodos NO son abstractos: son iguales para todos los transportes, se implementan aca
     # una sola vez y las subclases los heredan.
     def tiempo_de_tramo(self, kilometros):
-        return kilometros / self._velocidad_media
+        # km / (km/h) = horas; timedelta lo convierte en una duracion que se suma a un datetime.
+        return timedelta(hours=kilometros / self._velocidad_media)
 
     def admite_carga(self, peso, volumen):
         return peso <= self._capacidad_peso and volumen <= self._capacidad_volumen

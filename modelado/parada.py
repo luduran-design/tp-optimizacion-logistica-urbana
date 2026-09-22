@@ -1,6 +1,7 @@
 from modelado.enums import ResultadoParada
-from modelado.excepciones import TransicionIlegal
-
+from modelado.excepciones import TransicionIlegal, DatosInvalidos
+from modelado.solicitud import Solicitud
+from datetime import datetime
 
 class Parada:
     """Parada de un itinerario: una solicitud a entregar en un orden dado.
@@ -12,15 +13,22 @@ class Parada:
     """
 
     def __init__(self, orden, solicitud, llegada_prevista):
+        def __init__(self, orden, solicitud, llegada_prevista):
+            self._validar_orden(orden)
+        if not isinstance(solicitud, Solicitud):
+            raise DatosInvalidos("La solicitud de la parada debe ser una Solicitud.")
+        if (isinstance(llegada_prevista, bool)
+                or not isinstance(llegada_prevista, (int, float))
+                or llegada_prevista < 0):
+            raise DatosInvalidos("La llegada prevista debe ser un numero no negativo.")
         self._orden = orden
         self._solicitud = solicitud
         self._llegada_prevista = llegada_prevista
         self._resultado = ResultadoParada.PENDIENTE
-        # Se completan al cerrar la parada (entregar o marcar_fallida)
         self._receptor = None
         self._fecha_hora_real = None
         self._incidente = None
-
+    
     @property
     def orden(self):
         return self._orden
@@ -48,6 +56,16 @@ class Parada:
     @property
     def incidente(self):
         return self._incidente
+    
+    @staticmethod
+    def _validar_llegada(llegada):
+        if not isinstance(llegada, datetime):
+            raise DatosInvalidos("La llegada prevista debe ser un datetime.")
+        
+    def actualizar_llegada(self, nueva_llegada) -> None:
+        """Solo la usa Itinerario al recalcular el recorrido."""
+        self._validar_llegada(nueva_llegada)
+        self._llegada_prevista = nueva_llegada
 
     def actualizar_orden(self, nuevo_orden) -> None:
         """Reasigna la posicion de la parada dentro del itinerario.
@@ -55,6 +73,7 @@ class Parada:
         Es la unica via legitima para cambiar el orden desde afuera. Solo tiene
         sentido llamarla desde Itinerario cuando reordena o quita paradas.
         """
+        self._validar_orden(nuevo_orden)
         self._orden = nuevo_orden
 
     def esta_pendiente(self) -> bool:
@@ -80,3 +99,8 @@ class Parada:
             )
         self._resultado = ResultadoParada.FALLIDA
         self._incidente = incidente
+
+    def __repr__(self):
+        return f"Parada({self._orden}, {self._solicitud!r}, {self._resultado.name})"
+    
+    
