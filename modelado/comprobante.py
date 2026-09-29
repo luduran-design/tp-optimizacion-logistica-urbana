@@ -45,3 +45,5 @@ class Comprobante:
     @property
     def receptor(self):
         return self._receptor
+
+    
