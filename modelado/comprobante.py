@@ -1,4 +1,5 @@
 from modelado.excepciones import DatosInvalidos
+from modelado.solicitud import Solicitud
 from datetime import datetime
 
 class Comprobante:
@@ -10,15 +11,17 @@ class Comprobante:
     """
 
     def __init__(self, nro, solicitud, fecha_hora_real, receptor):
-        if nro is None or nro <= 0:
+        if isinstance(nro, bool) or not isinstance(nro, int) or nro <= 0:
             raise DatosInvalidos(
                 f"El nro del comprobante debe ser un entero positivo, no {nro!r}"
             )
-        if solicitud is None:
-            raise DatosInvalidos("El comprobante debe tener una solicitud")
+        if not isinstance(solicitud, Solicitud):
+            raise DatosInvalidos(
+                f"El comprobante debe tener una solicitud, no {solicitud!r}"
+            )
         if not isinstance(fecha_hora_real, datetime):
             raise DatosInvalidos("La fecha y hora real del comprobante debe ser un datetime")
-        if not receptor:
+        if not isinstance(receptor, str) or not receptor.strip():
             raise DatosInvalidos(
                 "El receptor del comprobante no puede estar vacio"
             )

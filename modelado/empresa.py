@@ -1,4 +1,7 @@
 from modelado.excepciones import DatosInvalidos
+from modelado.deposito import Deposito
+from modelado.matriz_distancias import MatrizDistancias
+from modelado.transporte import Transporte
 from modelado.solicitud import Solicitud
 from modelado.ventana import Ventana
 from modelado.articulo import Articulo
@@ -7,6 +10,12 @@ from modelado.viaje import Viaje
 
 class Empresa:
     def __init__(self, deposito, matriz):
+        if not isinstance(deposito, Deposito):
+            raise DatosInvalidos(f"El deposito debe ser un Deposito, no {deposito!r}")
+        if not isinstance(matriz, MatrizDistancias):
+            raise DatosInvalidos(f"La matriz debe ser una MatrizDistancias, no {matriz!r}")
+        if not matriz.contiene_ubicacion(deposito):
+            raise DatosInvalidos(f"El deposito {deposito!r} no pertenece a la matriz")
         self._deposito = deposito
         self._matriz = matriz
         # Registros indexados por id: la unicidad (RN1) queda garantizada por la
@@ -39,11 +48,15 @@ class Empresa:
     # --- Registro ---
 
     def registrar_transporte(self, transporte) -> None:
+        if not isinstance(transporte, Transporte):
+            raise DatosInvalidos(f"Solo se pueden registrar Transporte, no {transporte!r}")
         if transporte.id in self._flota:
             raise DatosInvalidos(f"Ya existe un transporte con id '{transporte.id}'")
         self._flota[transporte.id] = transporte
 
     def registrar_solicitud(self, solicitud) -> None:
+        if not isinstance(solicitud, Solicitud):
+            raise DatosInvalidos(f"Solo se pueden registrar Solicitud, no {solicitud!r}")
         if solicitud.id in self._solicitudes:
             raise DatosInvalidos(f"Ya existe una solicitud con id '{solicitud.id}'")
         self._solicitudes[solicitud.id] = solicitud

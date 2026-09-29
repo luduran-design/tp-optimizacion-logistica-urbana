@@ -135,15 +135,16 @@ class Itinerario:
     def agregar(self, solicitud) -> None:
         if not isinstance(solicitud, Solicitud):
             raise DatosInvalidos("Solo se pueden agregar objetos Solicitud.")
-        # Regla 5: no asignada a otro viaje ni repetida aca.
+        # Regla 5: no repetida aca ni asignada a otro viaje. Primero se mira este
+        # itinerario, asi el mensaje dice el motivo real.
+        if any(p.solicitud == solicitud for p in self._paradas):
+            raise DatosInvalidos(
+                f"La solicitud {solicitud.id} ya esta en este itinerario"
+            )
         if solicitud.esta_asignada():
             raise DatosInvalidos(
                 f"La solicitud {solicitud.id} ya pertenece a un viaje activo "
                 f"o ya fue entregada"
-            )
-        if any(p.solicitud == solicitud for p in self._paradas):
-            raise DatosInvalidos(
-                f"La solicitud {solicitud.id} ya esta en este itinerario"
             )
         # Regla 2: el destino no puede ser el deposito.
         if solicitud.destino == self._deposito:
@@ -159,6 +160,8 @@ class Itinerario:
         solicitud.marcar_como_asignada()
 
     def quitar(self, solicitud) -> None:
+        if not isinstance(solicitud, Solicitud):
+            raise DatosInvalidos(f"Solo se pueden quitar objetos Solicitud, no {solicitud!r}.")
         parada = next((p for p in self._paradas if p.solicitud == solicitud), None)
         if parada is None:
             raise DatosInvalidos(
