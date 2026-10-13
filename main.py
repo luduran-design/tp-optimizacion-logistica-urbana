@@ -1,4 +1,6 @@
-from datetime import date, datetime
+import json
+from pathlib import Path
+from datetime import date, datetime, time
 
 from modelado import (
     Articulo, Ubicacion, Deposito, Ventana, Solicitud,
@@ -10,12 +12,43 @@ from modelado import (
 )
 
 # Todo el escenario ocurre el mismo dia.
-FECHA = date(2026, 9, 30)
+FECHA = None  # Se establece al leer la fecha de datos.json.
 
 
 def hora(h: int, m: int = 0) -> datetime:
     """datetime de FECHA a las h:m."""
     return datetime(FECHA.year, FECHA.month, FECHA.day, h, m)
+
+
+def cargar_datos() -> dict:
+    """Lee datos.json junto a main.py, independientemente de donde se ejecute."""
+    ruta = Path(__file__).resolve().parent / "datos.json"
+    with open(ruta, "r", encoding="utf-8") as archivo:
+        return json.load(archivo)
+
+
+def horario(texto: str) -> datetime:
+    """Convierte un horario del JSON (HH:MM) a datetime de la fecha del escenario."""
+    return datetime.combine(FECHA, time.fromisoformat(texto))
+
+
+def crear_solicitud_desde_datos(empresa: Empresa, datos: dict,
+                                destino: Ubicacion) -> Solicitud:
+    """Reconstruye una solicitud usando los constructores y validaciones existentes."""
+    inicio = horario(datos["inicio"])
+    fin = horario(datos["fin"])
+    if "articulos_kwargs" in datos:
+        # JSON convierte los pares en listas; la fabrica exige tuplas.
+        articulos = {}
+        for nombre, medidas in datos["articulos_kwargs"].items():
+            articulos[nombre] = tuple(medidas)
+        return empresa.crear_solicitud(datos["id"], destino, inicio, fin, **articulos)
+    articulos = []
+    for articulo in datos["articulos"]:
+        articulos.append(Articulo(**articulo))
+    solicitud = Solicitud(datos["id"], destino, Ventana(inicio, fin), articulos)
+    empresa.registrar_solicitud(solicitud)
+    return solicitud
 
 
 def ids(solicitudes: list) -> list:
@@ -30,17 +63,25 @@ def mostrar_paradas(viaje: Viaje) -> None:
               f"llegada prevista {p.llegada_prevista:%H:%M}")
 
 
-def paso_0_escenario() -> tuple:
+def paso_0_escenario(datos: dict) -> tuple:
     """Arma deposito, ubicaciones, matriz dirigida y la Empresa."""
     print("===== PASO 0: El escenario =====")
 
-    deposito = Deposito("D1", "Deposito Central", "Barracas")
-    palermo = Ubicacion("U1", "Palermo", "Destino del pedido S1")
-    belgrano = Ubicacion("U2", "Belgrano", "Destino de la solicitud secundaria S2")
-
-    matriz = MatrizDistancias([deposito, palermo, belgrano])
-    matriz.agregar_tramo(deposito, palermo, 9.5)
-    matriz.agregar_tramo(palermo, deposito, 10.2)   # la vuelta mide distinto: es dirigida
+    deposito = Deposito(**datos["deposito"])
+    ubicaciones = {deposito.id: deposito}
+    for dato in datos["ubicaciones"]:
+        ubicacion = Ubicacion(**dato)
+        if ubicacion.id in ubicaciones:
+            raise DatosInvalidos("Id de ubicacion repetido en datos.json.")
+        ubicaciones[ubicacion.id] = ubicacion
+    # La demostracion sigue los pedidos S1 y S2.
+    solicitudes = {s["id"]: s for s in datos["solicitudes"]}
+    palermo = ubicaciones[solicitudes["S1"]["destino"]]
+    belgrano = ubicaciones[solicitudes["S2"]["destino"]]
+    matriz = MatrizDistancias(list(ubicaciones.values()))
+    for tramo in datos["tramos_iniciales"]:
+        matriz.agregar_tramo(ubicaciones[tramo["origen"]],
+                             ubicaciones[tramo["destino"]], tramo["distancia"])
 
     empresa = Empresa(deposito, matriz)
 
@@ -57,15 +98,14 @@ def paso_0_escenario() -> tuple:
         print("RutaIncompleta ->", e)
 
     try:
-        matriz.agregar_tramo(deposito, Ubicacion("U9", "Tigre", ""), 30)
+        matriz.agregar_tramo(deposito, Ubicacion("U_NO_REGISTRADA", "Tigre", ""), 30)
     except DatosInvalidos as e:
         print("DatosInvalidos ->", e)
 
     # Ahora si cargamos los tramos de Belgrano, en ambos sentidos.
-    matriz.agregar_tramo(deposito, belgrano, 14.0)
-    matriz.agregar_tramo(belgrano, deposito, 13.0)
-    matriz.agregar_tramo(palermo, belgrano, 5.0)
-    matriz.agregar_tramo(belgrano, palermo, 5.5)
+    for tramo in datos["tramos_adicionales"]:
+        matriz.agregar_tramo(ubicaciones[tramo["origen"]],
+                             ubicaciones[tramo["destino"]], tramo["distancia"])
     print("Tramos de Belgrano cargados. D1 -> Belgrano:",
           matriz.distancia(deposito, belgrano), "km")
 
@@ -73,19 +113,14 @@ def paso_0_escenario() -> tuple:
 
 
 def paso_1_nace_el_pedido(empresa: Empresa, palermo: Ubicacion,
-                          belgrano: Ubicacion) -> tuple:
+                          belgrano: Ubicacion, datos: dict) -> tuple:
     """Crea S1 a mano y S2 con la fabrica de Empresa."""
     print()
     print("===== PASO 1: Nace el pedido =====")
 
     # S1 se arma de abajo hacia arriba: Ventana + Articulos -> Solicitud.
-    ventana = Ventana(hora(10), hora(12))
-    articulos = [
-        Articulo("A1", "televisor", 18.0, 0.3),
-        Articulo("A2", "microondas", 12.0, 0.1),
-    ]
-    s1 = Solicitud("S1", palermo, ventana, articulos)
-    empresa.registrar_solicitud(s1)
+    solicitudes = {s["id"]: s for s in datos["solicitudes"]}
+    s1 = crear_solicitud_desde_datos(empresa, solicitudes["S1"], palermo)
 
     print(f"{s1.id}: destino {s1.destino.nombre}, "
           f"ventana {s1.ventana.inicio:%H:%M}-{s1.ventana.fin:%H:%M}")
@@ -106,8 +141,7 @@ def paso_1_nace_el_pedido(empresa: Empresa, palermo: Ubicacion,
 
     # S2 con la fabrica de Empresa. **articulos recibe cada articulo como
     # nombre=(peso, volumen); Empresa arma los Articulo y la Ventana por nosotros.
-    s2 = empresa.crear_solicitud("S2", belgrano, hora(9), hora(10, 30),
-                                 silla=(7.0, 0.4), lampara=(3.0, 0.2))
+    s2 = crear_solicitud_desde_datos(empresa, solicitudes["S2"], belgrano)
     print(f"{s2.id} creada con kwargs: articulos {[a.nombre for a in s2.articulos]}, "
           f"ventana {s2.ventana.inicio:%H:%M}-{s2.ventana.fin:%H:%M}")
 
@@ -117,19 +151,30 @@ def paso_1_nace_el_pedido(empresa: Empresa, palermo: Ubicacion,
     except DatosInvalidos as e:
         print("DatosInvalidos ->", e)
 
+    # Cargamos tambien las solicitudes extra para que esten disponibles en Empresa.
+    ubicaciones = {u["id"]: Ubicacion(**u) for u in datos["ubicaciones"]}
+    for dato in datos["solicitudes"]:
+        if dato["id"] not in ("S1", "S2", "S3"):
+            crear_solicitud_desde_datos(empresa, dato, ubicaciones[dato["destino"]])
+    print("Solicitudes registradas (S3 se carga en el paso 4):", len(empresa.solicitudes))
+
     return s1, s2
 
 
-def paso_2_quien_lo_lleva(empresa: Empresa) -> Furgoneta:
+def paso_2_quien_lo_lleva(empresa: Empresa, datos: dict) -> Furgoneta:
     """Registra la flota y muestra el polimorfismo de calcular_impacto."""
     print()
     print("===== PASO 2: Quien lo lleva =====")
 
     # (id, cap_peso, cap_volumen, velocidad, costo_km, costo_parada, factor_ambiental)
     # Mismo factor ambiental para los tres: la diferencia viene SOLO de la subclase.
-    empresa.registrar_transporte(Motocicleta("M1", 20, 0.2, 40, 150, 200, 0.27))
-    empresa.registrar_transporte(Furgoneta("F1", 800, 8.0, 30, 250, 500, 0.27))
-    empresa.registrar_transporte(Camion("C1", 5000, 30.0, 25, 600, 800, 0.27))
+    clases = {"Motocicleta": Motocicleta, "Furgoneta": Furgoneta, "Camion": Camion}
+    for dato in datos["flota"]:
+        atributos = dato.copy()
+        tipo = atributos.pop("tipo")
+        if tipo not in clases:
+            raise DatosInvalidos(f"Tipo de transporte desconocido: {tipo}")
+        empresa.registrar_transporte(clases[tipo](**atributos))
 
     # Polimorfismo: mismo mensaje, mismos datos, cada uno responde a su manera.
     km, carga = 20, 1000
@@ -160,7 +205,8 @@ def paso_3_politica(empresa: Empresa) -> list:
     print()
     print("===== PASO 3: PoliticaDeOrdenamiento =====")
 
-    pendientes = empresa.solicitudes_pendientes()
+    # El viaje didactico sigue usando S1 y S2; las demas quedan disponibles.
+    pendientes = [s for s in empresa.solicitudes_pendientes() if s.id in ("S1", "S2")]
     print("Pendientes:", ids(pendientes))
 
     # Strategy: Empresa no sabe que politica recibe, solo le pide sugerir_orden.
@@ -178,7 +224,7 @@ def paso_3_politica(empresa: Empresa) -> list:
 
 def paso_4_se_arma_el_viaje(empresa: Empresa, furgoneta: Furgoneta, s1: Solicitud,
                             s2: Solicitud, palermo: Ubicacion,
-                            orden_sugerido: list) -> Viaje:
+                            orden_sugerido: list, datos: dict) -> Viaje:
     """Crea el viaje, agrega paradas y muestra la revalidacion atomica."""
     print()
     print("===== PASO 4: Se arma el viaje =====")
@@ -198,8 +244,8 @@ def paso_4_se_arma_el_viaje(empresa: Empresa, furgoneta: Furgoneta, s1: Solicitu
     print("S1 esta asignada?", s1.esta_asignada())
 
     # Regla 7: si agregar falla, el viaje queda exactamente como estaba.
-    s3 = empresa.crear_solicitud("S3", palermo, hora(9), hora(18),
-                                 heladera_industrial=(900.0, 2.5))
+    solicitudes = {s["id"]: s for s in datos["solicitudes"]}
+    s3 = crear_solicitud_desde_datos(empresa, solicitudes["S3"], palermo)
     antes = (len(viaje.paradas), viaje.distancia_total())
     print(f"Antes : {antes[0]} paradas, {round(antes[1], 2)} km")
     try:
@@ -311,14 +357,20 @@ def paso_6_cierre(viaje: Viaje) -> None:
 
 def main() -> None:
     """Recorre el pedido S1 de punta a punta, un paso por funcion."""
+    global FECHA
     try:
-        empresa, palermo, belgrano = paso_0_escenario()
-        s1, s2 = paso_1_nace_el_pedido(empresa, palermo, belgrano)
-        furgoneta = paso_2_quien_lo_lleva(empresa)
+        datos = cargar_datos()
+        FECHA = date.fromisoformat(datos["fecha"])
+        empresa, palermo, belgrano = paso_0_escenario(datos)
+        s1, s2 = paso_1_nace_el_pedido(empresa, palermo, belgrano, datos)
+        furgoneta = paso_2_quien_lo_lleva(empresa, datos)
         orden_sugerido = paso_3_politica(empresa)
-        viaje = paso_4_se_arma_el_viaje(empresa, furgoneta, s1, s2, palermo, orden_sugerido)
+        viaje = paso_4_se_arma_el_viaje(empresa, furgoneta, s1, s2, palermo, orden_sugerido, datos)
         paso_5_se_ejecuta(empresa, viaje, furgoneta, s1, s2)
         paso_6_cierre(viaje)
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        print(f"No se pudo cargar o interpretar datos.json: {e}")
+        raise
     except ErrorLogistica as e:
         # Red de seguridad: ningun error del dominio corta la demo sin explicacion.
         print(f"Error inesperado: {type(e).__name__} -> {e}")
@@ -327,3 +379,4 @@ def main() -> None:
 # No cambiar a partir de aqui
 if __name__ == "__main__":
     main()
+
