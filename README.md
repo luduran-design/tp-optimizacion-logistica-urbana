@@ -472,3 +472,15 @@ Las pruebas están en `tests/`, una por clase, y se corren con:
 ```
 pytest
 ```
+
+## Carga de datos desde JSON
+Ejecutar python main.py. El programa lee datos.json, ubicado junto a main.py, con json.load(). No se requieren bibliotecas externas para la carga.
+El archivo contiene la fecha, el deposito, las ubicaciones, los tramos dirigidos, las solicitudes con sus articulos y la flota. Python recibe diccionarios y listas, y luego crea los objetos mediante los constructores existentes. Las fechas y los horarios se convierten a date y datetime.
+Los tramos se separan en tramos_iniciales y tramos_adicionales para conservar la demostracion de una ruta incompleta del paso 0. Cada sentido tiene su propia distancia. Los destinos y extremos de los tramos se refieren a ubicaciones por su id.
+S1 usa una lista de articulos con id; S2 y S3 usan articulos_kwargs, con pares [peso, volumen], que el cargador convierte en tuplas para la fabrica de Empresa. tipo identifica la subclase de cada vehiculo.
+Se pueden editar valores o agregar vehiculos y ubicaciones en el archivo. La demostracion conserva los ids S1, S2, S3 y F1, y sigue ejecutando el mismo viaje de ejemplo: las solicitudes adicionales se registran en Empresa, pero no se incorporan automaticamente a ese viaje. Los horarios de ejecucion, incidentes y ejemplos intencionalmente invalidos siguen definidos en el codigo. No se guarda el estado final; este JSON es una fuente de datos iniciales.
+
+## Escenario ampliado de prueba
+datos.json contiene 20 ubicaciones de entrega, un deposito, 30 solicitudes, 20 vehiculos (7 motocicletas, 7 furgonetas y 6 camiones) y los 420 tramos dirigidos entre los 21 puntos. Los tramos de distancia cero de un punto a si mismo no se almacenan: la matriz ya los resuelve.
+Los datos son ficticios. Los nombres corresponden a barrios de Buenos Aires, pero las distancias son simuladas y no representan rutas reales. Se mantienen los seis tramos del ejemplo original para conservar sus resultados.
+Todas las ubicaciones, distancias y unidades de la flota se cargan. Las solicitudes adicionales se registran en Empresa en el paso 1; S3 se registra en el paso 4 para demostrar capacidad excedida. Las politicas del paso 3 se aplican a S1 y S2 para conservar el viaje didactico, mientras que las demas solicitudes permanecen pendientes y disponibles para nuevos viajes.
