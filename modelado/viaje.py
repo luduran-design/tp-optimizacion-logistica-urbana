@@ -1,3 +1,5 @@
+from collections import deque
+
 from modelado.enums import EstadoViaje
 from modelado.excepciones import TransicionIlegal, DatosInvalidos
 from modelado.itinerario import Itinerario
@@ -18,6 +20,12 @@ class Viaje:
         self._itinerario = Itinerario(deposito, hora_salida, matriz, transporte)
         self._comprobantes = []
         self._incidentes = []
+        # PILA (LIFO) de ordenes anteriores: cada reordenar apila el orden que
+        # habia; deshacer_reordenar desapila el ultimo y lo vuelve a aplicar.
+        self._ordenes_anteriores = []
+        # COLA (FIFO) de paradas por visitar: se llena al iniciar, en el orden
+        # planificado, y cada parada resuelta sale por adelante (regla 11).
+        self._paradas_por_visitar = deque()
 
     # --- Identidad y estado propios ---
     @property
@@ -43,6 +51,14 @@ class Viaje:
     @property
     def incidentes(self):
         return list(self._incidentes)
+
+    @property
+    def paradas_por_visitar(self):
+        """Copia de la cola: la primera es la proxima a resolver."""
+        return list(self._paradas_por_visitar)
+
+    def puede_deshacer(self) -> bool:
+        return len(self._ordenes_anteriores) > 0
 
     # --- Delegacion al itinerario ---
     @property
@@ -77,14 +93,30 @@ class Viaje:
     def agregar_solicitud(self, solicitud):
         self._exigir_planificado("agregar solicitudes a")
         self._itinerario.agregar(solicitud)
+        # Con otras solicitudes, los ordenes guardados ya no sirven.
+        self._ordenes_anteriores.clear()
 
     def quitar_solicitud(self, solicitud):
         self._exigir_planificado("quitar solicitudes de")
         self._itinerario.quitar(solicitud)
+        self._ordenes_anteriores.clear()
 
     def reordenar(self, secuencia):
         self._exigir_planificado("reordenar")
+        anterior = [p.solicitud for p in self._itinerario.paradas]
         self._itinerario.reordenar(secuencia)
+        # Solo se apila si el reordenamiento salio bien (regla 7).
+        self._ordenes_anteriores.append(anterior)
+
+    def deshacer_reordenar(self):
+        """Vuelve al orden anterior al ultimo reordenar (pop de la pila)."""
+        self._exigir_planificado("deshacer un reordenamiento de")
+        if not self._ordenes_anteriores:
+            raise TransicionIlegal("No hay reordenamientos para deshacer")
+        anterior = self._ordenes_anteriores.pop()
+        # Ese orden ya fue valido con estas mismas solicitudes, asi que se
+        # vuelve a calcular y aplicar sin sorpresas.
+        self._itinerario.reordenar(anterior)
 
     # --- Maquina de estados (regla 10) ---
 
@@ -97,6 +129,9 @@ class Viaje:
                 "No se puede iniciar un viaje con itinerario no factible"
             )
         self._estado = EstadoViaje.EN_CURSO
+        # Desde aca el orden queda fijo: se encolan las paradas en ese orden.
+        self._paradas_por_visitar = deque(self._itinerario.paradas)
+        self._ordenes_anteriores.clear()
 
     def finalizar(self):
         if self._estado != EstadoViaje.EN_CURSO:
@@ -125,6 +160,9 @@ class Viaje:
         return all(not p.esta_pendiente() for p in self._itinerario.paradas)
 
     def parada_actual(self):
+        # En curso, la parada actual es la que esta al frente de la cola.
+        if self._estado == EstadoViaje.EN_CURSO:
+            return self._paradas_por_visitar[0] if self._paradas_por_visitar else None
         return next((p for p in self._itinerario.paradas if p.esta_pendiente()), None)
 
     # --- Ejecucion de paradas (regla 11) ---
@@ -159,6 +197,7 @@ class Viaje:
             len(self._comprobantes) + 1, solicitud, fecha_hora, receptor
         )
         parada.entregar(receptor, fecha_hora)
+        self._paradas_por_visitar.popleft()     # sale de la cola: ya se resolvio
         self._comprobantes.append(comprobante)
 
     def registrar_fallo(self, solicitud, incidente):
@@ -178,6 +217,7 @@ class Viaje:
                 f"no a la solicitud {solicitud.id} que fallo"
             )
         parada.marcar_fallida(incidente)
+        self._paradas_por_visitar.popleft()     # sale de la cola: ya se resolvio
         self._incidentes.append(incidente)
 
     # --- Incidentes (regla 12) ---
