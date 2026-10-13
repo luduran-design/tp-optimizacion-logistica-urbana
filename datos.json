@@ -1,0 +1,3088 @@
+{
+    "fecha": "2026-09-30",
+    "deposito": {
+        "id": "D1",
+        "nombre": "Deposito Central",
+        "descripcion": "Barracas"
+    },
+    "ubicaciones": [
+        {
+            "id": "U1",
+            "nombre": "Palermo",
+            "descripcion": "Punto de entrega de prueba en Palermo"
+        },
+        {
+            "id": "U2",
+            "nombre": "Belgrano",
+            "descripcion": "Punto de entrega de prueba en Belgrano"
+        },
+        {
+            "id": "U3",
+            "nombre": "Núñez",
+            "descripcion": "Punto de entrega de prueba en Núñez"
+        },
+        {
+            "id": "U4",
+            "nombre": "Recoleta",
+            "descripcion": "Punto de entrega de prueba en Recoleta"
+        },
+        {
+            "id": "U5",
+            "nombre": "Retiro",
+            "descripcion": "Punto de entrega de prueba en Retiro"
+        },
+        {
+            "id": "U6",
+            "nombre": "San Nicolás",
+            "descripcion": "Punto de entrega de prueba en San Nicolás"
+        },
+        {
+            "id": "U7",
+            "nombre": "Montserrat",
+            "descripcion": "Punto de entrega de prueba en Montserrat"
+        },
+        {
+            "id": "U8",
+            "nombre": "San Telmo",
+            "descripcion": "Punto de entrega de prueba en San Telmo"
+        },
+        {
+            "id": "U9",
+            "nombre": "La Boca",
+            "descripcion": "Punto de entrega de prueba en La Boca"
+        },
+        {
+            "id": "U10",
+            "nombre": "Barracas",
+            "descripcion": "Punto de entrega de prueba en Barracas"
+        },
+        {
+            "id": "U11",
+            "nombre": "Constitución",
+            "descripcion": "Punto de entrega de prueba en Constitución"
+        },
+        {
+            "id": "U12",
+            "nombre": "Balvanera",
+            "descripcion": "Punto de entrega de prueba en Balvanera"
+        },
+        {
+            "id": "U13",
+            "nombre": "Almagro",
+            "descripcion": "Punto de entrega de prueba en Almagro"
+        },
+        {
+            "id": "U14",
+            "nombre": "Caballito",
+            "descripcion": "Punto de entrega de prueba en Caballito"
+        },
+        {
+            "id": "U15",
+            "nombre": "Flores",
+            "descripcion": "Punto de entrega de prueba en Flores"
+        },
+        {
+            "id": "U16",
+            "nombre": "Villa Crespo",
+            "descripcion": "Punto de entrega de prueba en Villa Crespo"
+        },
+        {
+            "id": "U17",
+            "nombre": "Chacarita",
+            "descripcion": "Punto de entrega de prueba en Chacarita"
+        },
+        {
+            "id": "U18",
+            "nombre": "Colegiales",
+            "descripcion": "Punto de entrega de prueba en Colegiales"
+        },
+        {
+            "id": "U19",
+            "nombre": "Villa Urquiza",
+            "descripcion": "Punto de entrega de prueba en Villa Urquiza"
+        },
+        {
+            "id": "U20",
+            "nombre": "Saavedra",
+            "descripcion": "Punto de entrega de prueba en Saavedra"
+        }
+    ],
+    "tramos_iniciales": [
+        {
+            "origen": "D1",
+            "destino": "U1",
+            "distancia": 9.5
+        },
+        {
+            "origen": "U1",
+            "destino": "D1",
+            "distancia": 10.2
+        }
+    ],
+    "tramos_adicionales": [
+        {
+            "origen": "D1",
+            "destino": "U2",
+            "distancia": 14.0
+        },
+        {
+            "origen": "U2",
+            "destino": "D1",
+            "distancia": 13.0
+        },
+        {
+            "origen": "U1",
+            "destino": "U2",
+            "distancia": 5.0
+        },
+        {
+            "origen": "U2",
+            "destino": "U1",
+            "distancia": 5.5
+        },
+        {
+            "origen": "D1",
+            "destino": "U3",
+            "distancia": 9.25
+        },
+        {
+            "origen": "D1",
+            "destino": "U4",
+            "distancia": 11.72
+        },
+        {
+            "origen": "D1",
+            "destino": "U5",
+            "distancia": 4.17
+        },
+        {
+            "origen": "D1",
+            "destino": "U6",
+            "distancia": 5.54
+        },
+        {
+            "origen": "D1",
+            "destino": "U7",
+            "distancia": 7.56
+        },
+        {
+            "origen": "D1",
+            "destino": "U8",
+            "distancia": 9.81
+        },
+        {
+            "origen": "D1",
+            "destino": "U9",
+            "distancia": 12.16
+        },
+        {
+            "origen": "D1",
+            "destino": "U10",
+            "distancia": 6.37
+        },
+        {
+            "origen": "D1",
+            "destino": "U11",
+            "distancia": 7.3
+        },
+        {
+            "origen": "D1",
+            "destino": "U12",
+            "distancia": 8.9
+        },
+        {
+            "origen": "D1",
+            "destino": "U13",
+            "distancia": 10.86
+        },
+        {
+            "origen": "D1",
+            "destino": "U14",
+            "distancia": 13.01
+        },
+        {
+            "origen": "D1",
+            "destino": "U15",
+            "distancia": 8.61
+        },
+        {
+            "origen": "D1",
+            "destino": "U16",
+            "distancia": 9.3
+        },
+        {
+            "origen": "D1",
+            "destino": "U17",
+            "distancia": 10.58
+        },
+        {
+            "origen": "D1",
+            "destino": "U18",
+            "distancia": 12.26
+        },
+        {
+            "origen": "D1",
+            "destino": "U19",
+            "distancia": 14.19
+        },
+        {
+            "origen": "D1",
+            "destino": "U20",
+            "distancia": 10.86
+        },
+        {
+            "origen": "U1",
+            "destino": "U3",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U1",
+            "destino": "U4",
+            "distancia": 8.1
+        },
+        {
+            "origen": "U1",
+            "destino": "U5",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U1",
+            "destino": "U6",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U1",
+            "destino": "U7",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U1",
+            "destino": "U8",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U1",
+            "destino": "U9",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U1",
+            "destino": "U10",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U1",
+            "destino": "U11",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U1",
+            "destino": "U12",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U1",
+            "destino": "U13",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U1",
+            "destino": "U14",
+            "distancia": 9.37
+        },
+        {
+            "origen": "U1",
+            "destino": "U15",
+            "distancia": 7.89
+        },
+        {
+            "origen": "U1",
+            "destino": "U16",
+            "distancia": 7.45
+        },
+        {
+            "origen": "U1",
+            "destino": "U17",
+            "distancia": 7.89
+        },
+        {
+            "origen": "U1",
+            "destino": "U18",
+            "distancia": 9.07
+        },
+        {
+            "origen": "U1",
+            "destino": "U19",
+            "distancia": 10.74
+        },
+        {
+            "origen": "U1",
+            "destino": "U20",
+            "distancia": 10.05
+        },
+        {
+            "origen": "U2",
+            "destino": "U3",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U2",
+            "destino": "U4",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U2",
+            "destino": "U5",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U2",
+            "destino": "U6",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U2",
+            "destino": "U7",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U2",
+            "destino": "U8",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U2",
+            "destino": "U9",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U2",
+            "destino": "U10",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U2",
+            "destino": "U11",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U2",
+            "destino": "U12",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U2",
+            "destino": "U13",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U2",
+            "destino": "U14",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U2",
+            "destino": "U15",
+            "distancia": 9.07
+        },
+        {
+            "origen": "U2",
+            "destino": "U16",
+            "distancia": 7.89
+        },
+        {
+            "origen": "U2",
+            "destino": "U17",
+            "distancia": 7.45
+        },
+        {
+            "origen": "U2",
+            "destino": "U18",
+            "distancia": 7.89
+        },
+        {
+            "origen": "U2",
+            "destino": "U19",
+            "distancia": 9.07
+        },
+        {
+            "origen": "U2",
+            "destino": "U20",
+            "distancia": 10.99
+        },
+        {
+            "origen": "U3",
+            "destino": "D1",
+            "distancia": 9.93
+        },
+        {
+            "origen": "U3",
+            "destino": "U1",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U3",
+            "destino": "U2",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U3",
+            "destino": "U4",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U3",
+            "destino": "U5",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U3",
+            "destino": "U6",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U3",
+            "destino": "U7",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U3",
+            "destino": "U8",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U3",
+            "destino": "U9",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U3",
+            "destino": "U10",
+            "distancia": 9.37
+        },
+        {
+            "origen": "U3",
+            "destino": "U11",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U3",
+            "destino": "U12",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U3",
+            "destino": "U13",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U3",
+            "destino": "U14",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U3",
+            "destino": "U15",
+            "distancia": 10.74
+        },
+        {
+            "origen": "U3",
+            "destino": "U16",
+            "distancia": 9.07
+        },
+        {
+            "origen": "U3",
+            "destino": "U17",
+            "distancia": 7.89
+        },
+        {
+            "origen": "U3",
+            "destino": "U18",
+            "distancia": 7.45
+        },
+        {
+            "origen": "U3",
+            "destino": "U19",
+            "distancia": 7.89
+        },
+        {
+            "origen": "U3",
+            "destino": "U20",
+            "distancia": 12.39
+        },
+        {
+            "origen": "U4",
+            "destino": "D1",
+            "distancia": 12.58
+        },
+        {
+            "origen": "U4",
+            "destino": "U1",
+            "distancia": 8.7
+        },
+        {
+            "origen": "U4",
+            "destino": "U2",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U4",
+            "destino": "U3",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U4",
+            "destino": "U5",
+            "distancia": 10.84
+        },
+        {
+            "origen": "U4",
+            "destino": "U6",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U4",
+            "destino": "U7",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U4",
+            "destino": "U8",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U4",
+            "destino": "U9",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U4",
+            "destino": "U10",
+            "distancia": 11.57
+        },
+        {
+            "origen": "U4",
+            "destino": "U11",
+            "distancia": 9.37
+        },
+        {
+            "origen": "U4",
+            "destino": "U12",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U4",
+            "destino": "U13",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U4",
+            "destino": "U14",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U4",
+            "destino": "U15",
+            "distancia": 12.69
+        },
+        {
+            "origen": "U4",
+            "destino": "U16",
+            "distancia": 10.74
+        },
+        {
+            "origen": "U4",
+            "destino": "U17",
+            "distancia": 9.07
+        },
+        {
+            "origen": "U4",
+            "destino": "U18",
+            "distancia": 7.89
+        },
+        {
+            "origen": "U4",
+            "destino": "U19",
+            "distancia": 7.45
+        },
+        {
+            "origen": "U4",
+            "destino": "U20",
+            "distancia": 14.1
+        },
+        {
+            "origen": "U5",
+            "destino": "D1",
+            "distancia": 4.47
+        },
+        {
+            "origen": "U5",
+            "destino": "U1",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U5",
+            "destino": "U2",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U5",
+            "destino": "U3",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U5",
+            "destino": "U4",
+            "distancia": 11.64
+        },
+        {
+            "origen": "U5",
+            "destino": "U6",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U5",
+            "destino": "U7",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U5",
+            "destino": "U8",
+            "distancia": 8.1
+        },
+        {
+            "origen": "U5",
+            "destino": "U9",
+            "distancia": 10.58
+        },
+        {
+            "origen": "U5",
+            "destino": "U10",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U5",
+            "destino": "U11",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U5",
+            "destino": "U12",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U5",
+            "destino": "U13",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U5",
+            "destino": "U14",
+            "distancia": 10.84
+        },
+        {
+            "origen": "U5",
+            "destino": "U15",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U5",
+            "destino": "U16",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U5",
+            "destino": "U17",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U5",
+            "destino": "U18",
+            "distancia": 9.37
+        },
+        {
+            "origen": "U5",
+            "destino": "U19",
+            "distancia": 11.57
+        },
+        {
+            "origen": "U5",
+            "destino": "U20",
+            "distancia": 7.45
+        },
+        {
+            "origen": "U6",
+            "destino": "D1",
+            "distancia": 5.95
+        },
+        {
+            "origen": "U6",
+            "destino": "U1",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U6",
+            "destino": "U2",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U6",
+            "destino": "U3",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U6",
+            "destino": "U4",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U6",
+            "destino": "U5",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U6",
+            "destino": "U7",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U6",
+            "destino": "U8",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U6",
+            "destino": "U9",
+            "distancia": 8.1
+        },
+        {
+            "origen": "U6",
+            "destino": "U10",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U6",
+            "destino": "U11",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U6",
+            "destino": "U12",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U6",
+            "destino": "U13",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U6",
+            "destino": "U14",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U6",
+            "destino": "U15",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U6",
+            "destino": "U16",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U6",
+            "destino": "U17",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U6",
+            "destino": "U18",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U6",
+            "destino": "U19",
+            "distancia": 9.37
+        },
+        {
+            "origen": "U6",
+            "destino": "U20",
+            "distancia": 7.89
+        },
+        {
+            "origen": "U7",
+            "destino": "D1",
+            "distancia": 8.12
+        },
+        {
+            "origen": "U7",
+            "destino": "U1",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U7",
+            "destino": "U2",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U7",
+            "destino": "U3",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U7",
+            "destino": "U4",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U7",
+            "destino": "U5",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U7",
+            "destino": "U6",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U7",
+            "destino": "U8",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U7",
+            "destino": "U9",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U7",
+            "destino": "U10",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U7",
+            "destino": "U11",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U7",
+            "destino": "U12",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U7",
+            "destino": "U13",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U7",
+            "destino": "U14",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U7",
+            "destino": "U15",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U7",
+            "destino": "U16",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U7",
+            "destino": "U17",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U7",
+            "destino": "U18",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U7",
+            "destino": "U19",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U7",
+            "destino": "U20",
+            "distancia": 9.07
+        },
+        {
+            "origen": "U8",
+            "destino": "D1",
+            "distancia": 10.54
+        },
+        {
+            "origen": "U8",
+            "destino": "U1",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U8",
+            "destino": "U2",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U8",
+            "destino": "U3",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U8",
+            "destino": "U4",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U8",
+            "destino": "U5",
+            "distancia": 8.7
+        },
+        {
+            "origen": "U8",
+            "destino": "U6",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U8",
+            "destino": "U7",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U8",
+            "destino": "U9",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U8",
+            "destino": "U10",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U8",
+            "destino": "U11",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U8",
+            "destino": "U12",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U8",
+            "destino": "U13",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U8",
+            "destino": "U14",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U8",
+            "destino": "U15",
+            "distancia": 9.37
+        },
+        {
+            "origen": "U8",
+            "destino": "U16",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U8",
+            "destino": "U17",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U8",
+            "destino": "U18",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U8",
+            "destino": "U19",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U8",
+            "destino": "U20",
+            "distancia": 10.74
+        },
+        {
+            "origen": "U9",
+            "destino": "D1",
+            "distancia": 13.06
+        },
+        {
+            "origen": "U9",
+            "destino": "U1",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U9",
+            "destino": "U2",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U9",
+            "destino": "U3",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U9",
+            "destino": "U4",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U9",
+            "destino": "U5",
+            "distancia": 11.37
+        },
+        {
+            "origen": "U9",
+            "destino": "U6",
+            "distancia": 8.7
+        },
+        {
+            "origen": "U9",
+            "destino": "U7",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U9",
+            "destino": "U8",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U9",
+            "destino": "U10",
+            "distancia": 10.84
+        },
+        {
+            "origen": "U9",
+            "destino": "U11",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U9",
+            "destino": "U12",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U9",
+            "destino": "U13",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U9",
+            "destino": "U14",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U9",
+            "destino": "U15",
+            "distancia": 11.57
+        },
+        {
+            "origen": "U9",
+            "destino": "U16",
+            "distancia": 9.37
+        },
+        {
+            "origen": "U9",
+            "destino": "U17",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U9",
+            "destino": "U18",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U9",
+            "destino": "U19",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U9",
+            "destino": "U20",
+            "distancia": 12.69
+        },
+        {
+            "origen": "U10",
+            "destino": "D1",
+            "distancia": 6.84
+        },
+        {
+            "origen": "U10",
+            "destino": "U1",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U10",
+            "destino": "U2",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U10",
+            "destino": "U3",
+            "distancia": 10.07
+        },
+        {
+            "origen": "U10",
+            "destino": "U4",
+            "distancia": 12.43
+        },
+        {
+            "origen": "U10",
+            "destino": "U5",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U10",
+            "destino": "U6",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U10",
+            "destino": "U7",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U10",
+            "destino": "U8",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U10",
+            "destino": "U9",
+            "distancia": 11.64
+        },
+        {
+            "origen": "U10",
+            "destino": "U11",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U10",
+            "destino": "U12",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U10",
+            "destino": "U13",
+            "distancia": 8.1
+        },
+        {
+            "origen": "U10",
+            "destino": "U14",
+            "distancia": 10.58
+        },
+        {
+            "origen": "U10",
+            "destino": "U15",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U10",
+            "destino": "U16",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U10",
+            "destino": "U17",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U10",
+            "destino": "U18",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U10",
+            "destino": "U19",
+            "distancia": 10.84
+        },
+        {
+            "origen": "U10",
+            "destino": "U20",
+            "distancia": 5.18
+        },
+        {
+            "origen": "U11",
+            "destino": "D1",
+            "distancia": 7.84
+        },
+        {
+            "origen": "U11",
+            "destino": "U1",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U11",
+            "destino": "U2",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U11",
+            "destino": "U3",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U11",
+            "destino": "U4",
+            "distancia": 10.07
+        },
+        {
+            "origen": "U11",
+            "destino": "U5",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U11",
+            "destino": "U6",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U11",
+            "destino": "U7",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U11",
+            "destino": "U8",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U11",
+            "destino": "U9",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U11",
+            "destino": "U10",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U11",
+            "destino": "U12",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U11",
+            "destino": "U13",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U11",
+            "destino": "U14",
+            "distancia": 8.1
+        },
+        {
+            "origen": "U11",
+            "destino": "U15",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U11",
+            "destino": "U16",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U11",
+            "destino": "U17",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U11",
+            "destino": "U18",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U11",
+            "destino": "U19",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U11",
+            "destino": "U20",
+            "distancia": 5.82
+        },
+        {
+            "origen": "U12",
+            "destino": "D1",
+            "distancia": 9.56
+        },
+        {
+            "origen": "U12",
+            "destino": "U1",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U12",
+            "destino": "U2",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U12",
+            "destino": "U3",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U12",
+            "destino": "U4",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U12",
+            "destino": "U5",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U12",
+            "destino": "U6",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U12",
+            "destino": "U7",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U12",
+            "destino": "U8",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U12",
+            "destino": "U9",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U12",
+            "destino": "U10",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U12",
+            "destino": "U11",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U12",
+            "destino": "U13",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U12",
+            "destino": "U14",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U12",
+            "destino": "U15",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U12",
+            "destino": "U16",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U12",
+            "destino": "U17",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U12",
+            "destino": "U18",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U12",
+            "destino": "U19",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U12",
+            "destino": "U20",
+            "distancia": 7.38
+        },
+        {
+            "origen": "U13",
+            "destino": "D1",
+            "distancia": 11.67
+        },
+        {
+            "origen": "U13",
+            "destino": "U1",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U13",
+            "destino": "U2",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U13",
+            "destino": "U3",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U13",
+            "destino": "U4",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U13",
+            "destino": "U5",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U13",
+            "destino": "U6",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U13",
+            "destino": "U7",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U13",
+            "destino": "U8",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U13",
+            "destino": "U9",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U13",
+            "destino": "U10",
+            "distancia": 8.7
+        },
+        {
+            "origen": "U13",
+            "destino": "U11",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U13",
+            "destino": "U12",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U13",
+            "destino": "U14",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U13",
+            "destino": "U15",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U13",
+            "destino": "U16",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U13",
+            "destino": "U17",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U13",
+            "destino": "U18",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U13",
+            "destino": "U19",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U13",
+            "destino": "U20",
+            "distancia": 9.37
+        },
+        {
+            "origen": "U14",
+            "destino": "D1",
+            "distancia": 13.98
+        },
+        {
+            "origen": "U14",
+            "destino": "U1",
+            "distancia": 10.07
+        },
+        {
+            "origen": "U14",
+            "destino": "U2",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U14",
+            "destino": "U3",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U14",
+            "destino": "U4",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U14",
+            "destino": "U5",
+            "distancia": 11.64
+        },
+        {
+            "origen": "U14",
+            "destino": "U6",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U14",
+            "destino": "U7",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U14",
+            "destino": "U8",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U14",
+            "destino": "U9",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U14",
+            "destino": "U10",
+            "distancia": 11.37
+        },
+        {
+            "origen": "U14",
+            "destino": "U11",
+            "distancia": 8.7
+        },
+        {
+            "origen": "U14",
+            "destino": "U12",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U14",
+            "destino": "U13",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U14",
+            "destino": "U15",
+            "distancia": 10.84
+        },
+        {
+            "origen": "U14",
+            "destino": "U16",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U14",
+            "destino": "U17",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U14",
+            "destino": "U18",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U14",
+            "destino": "U19",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U14",
+            "destino": "U20",
+            "distancia": 11.57
+        },
+        {
+            "origen": "U15",
+            "destino": "D1",
+            "distancia": 9.24
+        },
+        {
+            "origen": "U15",
+            "destino": "U1",
+            "distancia": 8.48
+        },
+        {
+            "origen": "U15",
+            "destino": "U2",
+            "distancia": 9.74
+        },
+        {
+            "origen": "U15",
+            "destino": "U3",
+            "distancia": 11.53
+        },
+        {
+            "origen": "U15",
+            "destino": "U4",
+            "distancia": 13.63
+        },
+        {
+            "origen": "U15",
+            "destino": "U5",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U15",
+            "destino": "U6",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U15",
+            "destino": "U7",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U15",
+            "destino": "U8",
+            "distancia": 10.07
+        },
+        {
+            "origen": "U15",
+            "destino": "U9",
+            "distancia": 12.43
+        },
+        {
+            "origen": "U15",
+            "destino": "U10",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U15",
+            "destino": "U11",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U15",
+            "destino": "U12",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U15",
+            "destino": "U13",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U15",
+            "destino": "U14",
+            "distancia": 11.64
+        },
+        {
+            "origen": "U15",
+            "destino": "U16",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U15",
+            "destino": "U17",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U15",
+            "destino": "U18",
+            "distancia": 8.1
+        },
+        {
+            "origen": "U15",
+            "destino": "U19",
+            "distancia": 10.58
+        },
+        {
+            "origen": "U15",
+            "destino": "U20",
+            "distancia": 2.92
+        },
+        {
+            "origen": "U16",
+            "destino": "D1",
+            "distancia": 9.99
+        },
+        {
+            "origen": "U16",
+            "destino": "U1",
+            "distancia": 8.0
+        },
+        {
+            "origen": "U16",
+            "destino": "U2",
+            "distancia": 8.48
+        },
+        {
+            "origen": "U16",
+            "destino": "U3",
+            "distancia": 9.74
+        },
+        {
+            "origen": "U16",
+            "destino": "U4",
+            "distancia": 11.53
+        },
+        {
+            "origen": "U16",
+            "destino": "U5",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U16",
+            "destino": "U6",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U16",
+            "destino": "U7",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U16",
+            "destino": "U8",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U16",
+            "destino": "U9",
+            "distancia": 10.07
+        },
+        {
+            "origen": "U16",
+            "destino": "U10",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U16",
+            "destino": "U11",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U16",
+            "destino": "U12",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U16",
+            "destino": "U13",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U16",
+            "destino": "U14",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U16",
+            "destino": "U15",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U16",
+            "destino": "U17",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U16",
+            "destino": "U18",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U16",
+            "destino": "U19",
+            "distancia": 8.1
+        },
+        {
+            "origen": "U16",
+            "destino": "U20",
+            "distancia": 4.01
+        },
+        {
+            "origen": "U17",
+            "destino": "D1",
+            "distancia": 11.37
+        },
+        {
+            "origen": "U17",
+            "destino": "U1",
+            "distancia": 8.48
+        },
+        {
+            "origen": "U17",
+            "destino": "U2",
+            "distancia": 8.0
+        },
+        {
+            "origen": "U17",
+            "destino": "U3",
+            "distancia": 8.48
+        },
+        {
+            "origen": "U17",
+            "destino": "U4",
+            "distancia": 9.74
+        },
+        {
+            "origen": "U17",
+            "destino": "U5",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U17",
+            "destino": "U6",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U17",
+            "destino": "U7",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U17",
+            "destino": "U8",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U17",
+            "destino": "U9",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U17",
+            "destino": "U10",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U17",
+            "destino": "U11",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U17",
+            "destino": "U12",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U17",
+            "destino": "U13",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U17",
+            "destino": "U14",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U17",
+            "destino": "U15",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U17",
+            "destino": "U16",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U17",
+            "destino": "U18",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U17",
+            "destino": "U19",
+            "distancia": 5.62
+        },
+        {
+            "origen": "U17",
+            "destino": "U20",
+            "distancia": 6.11
+        },
+        {
+            "origen": "U18",
+            "destino": "D1",
+            "distancia": 13.17
+        },
+        {
+            "origen": "U18",
+            "destino": "U1",
+            "distancia": 9.74
+        },
+        {
+            "origen": "U18",
+            "destino": "U2",
+            "distancia": 8.48
+        },
+        {
+            "origen": "U18",
+            "destino": "U3",
+            "distancia": 8.0
+        },
+        {
+            "origen": "U18",
+            "destino": "U4",
+            "distancia": 8.48
+        },
+        {
+            "origen": "U18",
+            "destino": "U5",
+            "distancia": 10.07
+        },
+        {
+            "origen": "U18",
+            "destino": "U6",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U18",
+            "destino": "U7",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U18",
+            "destino": "U8",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U18",
+            "destino": "U9",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U18",
+            "destino": "U10",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U18",
+            "destino": "U11",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U18",
+            "destino": "U12",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U18",
+            "destino": "U13",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U18",
+            "destino": "U14",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U18",
+            "destino": "U15",
+            "distancia": 8.7
+        },
+        {
+            "origen": "U18",
+            "destino": "U16",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U18",
+            "destino": "U17",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U18",
+            "destino": "U19",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U18",
+            "destino": "U20",
+            "distancia": 8.44
+        },
+        {
+            "origen": "U19",
+            "destino": "D1",
+            "distancia": 15.25
+        },
+        {
+            "origen": "U19",
+            "destino": "U1",
+            "distancia": 11.53
+        },
+        {
+            "origen": "U19",
+            "destino": "U2",
+            "distancia": 9.74
+        },
+        {
+            "origen": "U19",
+            "destino": "U3",
+            "distancia": 8.48
+        },
+        {
+            "origen": "U19",
+            "destino": "U4",
+            "distancia": 8.0
+        },
+        {
+            "origen": "U19",
+            "destino": "U5",
+            "distancia": 12.43
+        },
+        {
+            "origen": "U19",
+            "destino": "U6",
+            "distancia": 10.07
+        },
+        {
+            "origen": "U19",
+            "destino": "U7",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U19",
+            "destino": "U8",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U19",
+            "destino": "U9",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U19",
+            "destino": "U10",
+            "distancia": 11.64
+        },
+        {
+            "origen": "U19",
+            "destino": "U11",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U19",
+            "destino": "U12",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U19",
+            "destino": "U13",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U19",
+            "destino": "U14",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U19",
+            "destino": "U15",
+            "distancia": 11.37
+        },
+        {
+            "origen": "U19",
+            "destino": "U16",
+            "distancia": 8.7
+        },
+        {
+            "origen": "U19",
+            "destino": "U17",
+            "distancia": 6.03
+        },
+        {
+            "origen": "U19",
+            "destino": "U18",
+            "distancia": 3.36
+        },
+        {
+            "origen": "U19",
+            "destino": "U20",
+            "distancia": 10.84
+        },
+        {
+            "origen": "U20",
+            "destino": "D1",
+            "distancia": 11.66
+        },
+        {
+            "origen": "U20",
+            "destino": "U1",
+            "distancia": 10.8
+        },
+        {
+            "origen": "U20",
+            "destino": "U2",
+            "distancia": 11.81
+        },
+        {
+            "origen": "U20",
+            "destino": "U3",
+            "distancia": 13.31
+        },
+        {
+            "origen": "U20",
+            "destino": "U4",
+            "distancia": 15.15
+        },
+        {
+            "origen": "U20",
+            "destino": "U5",
+            "distancia": 8.0
+        },
+        {
+            "origen": "U20",
+            "destino": "U6",
+            "distancia": 8.48
+        },
+        {
+            "origen": "U20",
+            "destino": "U7",
+            "distancia": 9.74
+        },
+        {
+            "origen": "U20",
+            "destino": "U8",
+            "distancia": 11.53
+        },
+        {
+            "origen": "U20",
+            "destino": "U9",
+            "distancia": 13.63
+        },
+        {
+            "origen": "U20",
+            "destino": "U10",
+            "distancia": 5.57
+        },
+        {
+            "origen": "U20",
+            "destino": "U11",
+            "distancia": 6.25
+        },
+        {
+            "origen": "U20",
+            "destino": "U12",
+            "distancia": 7.92
+        },
+        {
+            "origen": "U20",
+            "destino": "U13",
+            "distancia": 10.07
+        },
+        {
+            "origen": "U20",
+            "destino": "U14",
+            "distancia": 12.43
+        },
+        {
+            "origen": "U20",
+            "destino": "U15",
+            "distancia": 3.13
+        },
+        {
+            "origen": "U20",
+            "destino": "U16",
+            "distancia": 4.31
+        },
+        {
+            "origen": "U20",
+            "destino": "U17",
+            "distancia": 6.56
+        },
+        {
+            "origen": "U20",
+            "destino": "U18",
+            "distancia": 9.06
+        },
+        {
+            "origen": "U20",
+            "destino": "U19",
+            "distancia": 11.64
+        }
+    ],
+    "solicitudes": [
+        {
+            "id": "S1",
+            "destino": "U1",
+            "inicio": "10:00",
+            "fin": "12:00",
+            "articulos": [
+                {
+                    "id": "A1",
+                    "nombre": "televisor",
+                    "peso": 18.0,
+                    "volumen": 0.3
+                },
+                {
+                    "id": "A2",
+                    "nombre": "microondas",
+                    "peso": 12.0,
+                    "volumen": 0.1
+                }
+            ]
+        },
+        {
+            "id": "S2",
+            "destino": "U2",
+            "inicio": "09:00",
+            "fin": "10:30",
+            "articulos_kwargs": {
+                "silla": [
+                    7.0,
+                    0.4
+                ],
+                "lampara": [
+                    3.0,
+                    0.2
+                ]
+            }
+        },
+        {
+            "id": "S3",
+            "destino": "U1",
+            "inicio": "09:00",
+            "fin": "18:00",
+            "articulos_kwargs": {
+                "heladera_industrial": [
+                    900.0,
+                    2.5
+                ]
+            }
+        },
+        {
+            "id": "S4",
+            "destino": "U1",
+            "inicio": "13:00",
+            "fin": "16:00",
+            "articulos": [
+                {
+                    "id": "S4-A1",
+                    "nombre": "herramientas",
+                    "peso": 12.0,
+                    "volumen": 0.05
+                },
+                {
+                    "id": "S4-A2",
+                    "nombre": "ropa",
+                    "peso": 2.5,
+                    "volumen": 0.04
+                },
+                {
+                    "id": "S4-A3",
+                    "nombre": "zapatillas",
+                    "peso": 1.2,
+                    "volumen": 0.015
+                }
+            ]
+        },
+        {
+            "id": "S5",
+            "destino": "U2",
+            "inicio": "14:00",
+            "fin": "18:00",
+            "articulos_kwargs": {
+                "ropa": [
+                    2.5,
+                    0.04
+                ],
+                "zapatillas": [
+                    1.2,
+                    0.015
+                ],
+                "mesa_plegable": [
+                    15.0,
+                    0.18
+                ],
+                "bicicleta": [
+                    14.0,
+                    0.55
+                ]
+            }
+        },
+        {
+            "id": "S6",
+            "destino": "U3",
+            "inicio": "09:00",
+            "fin": "12:00",
+            "articulos": [
+                {
+                    "id": "S6-A1",
+                    "nombre": "zapatillas",
+                    "peso": 1.2,
+                    "volumen": 0.015
+                },
+                {
+                    "id": "S6-A2",
+                    "nombre": "mesa_plegable",
+                    "peso": 15.0,
+                    "volumen": 0.18
+                }
+            ]
+        },
+        {
+            "id": "S7",
+            "destino": "U4",
+            "inicio": "10:00",
+            "fin": "14:00",
+            "articulos_kwargs": {
+                "mesa_plegable": [
+                    15.0,
+                    0.18
+                ],
+                "bicicleta": [
+                    14.0,
+                    0.55
+                ],
+                "notebook": [
+                    2.0,
+                    0.012
+                ]
+            }
+        },
+        {
+            "id": "S8",
+            "destino": "U5",
+            "inicio": "11:00",
+            "fin": "14:00",
+            "articulos": [
+                {
+                    "id": "S8-A1",
+                    "nombre": "bicicleta",
+                    "peso": 14.0,
+                    "volumen": 0.55
+                },
+                {
+                    "id": "S8-A2",
+                    "nombre": "notebook",
+                    "peso": 2.0,
+                    "volumen": 0.012
+                },
+                {
+                    "id": "S8-A3",
+                    "nombre": "almohadas",
+                    "peso": 1.5,
+                    "volumen": 0.08
+                },
+                {
+                    "id": "S8-A4",
+                    "nombre": "ventilador",
+                    "peso": 4.0,
+                    "volumen": 0.07
+                }
+            ]
+        },
+        {
+            "id": "S9",
+            "destino": "U6",
+            "inicio": "12:00",
+            "fin": "16:00",
+            "articulos_kwargs": {
+                "notebook": [
+                    2.0,
+                    0.012
+                ],
+                "almohadas": [
+                    1.5,
+                    0.08
+                ]
+            }
+        },
+        {
+            "id": "S10",
+            "destino": "U7",
+            "inicio": "13:00",
+            "fin": "16:00",
+            "articulos": [
+                {
+                    "id": "S10-A1",
+                    "nombre": "almohadas",
+                    "peso": 1.5,
+                    "volumen": 0.08
+                },
+                {
+                    "id": "S10-A2",
+                    "nombre": "ventilador",
+                    "peso": 4.0,
+                    "volumen": 0.07
+                },
+                {
+                    "id": "S10-A3",
+                    "nombre": "vajilla",
+                    "peso": 9.0,
+                    "volumen": 0.035
+                }
+            ]
+        },
+        {
+            "id": "S11",
+            "destino": "U8",
+            "inicio": "14:00",
+            "fin": "18:00",
+            "articulos_kwargs": {
+                "ventilador": [
+                    4.0,
+                    0.07
+                ],
+                "vajilla": [
+                    9.0,
+                    0.035
+                ],
+                "parlante": [
+                    5.0,
+                    0.045
+                ],
+                "silla_escritorio": [
+                    11.0,
+                    0.3
+                ]
+            }
+        },
+        {
+            "id": "S12",
+            "destino": "U9",
+            "inicio": "09:00",
+            "fin": "12:00",
+            "articulos": [
+                {
+                    "id": "S12-A1",
+                    "nombre": "vajilla",
+                    "peso": 9.0,
+                    "volumen": 0.035
+                },
+                {
+                    "id": "S12-A2",
+                    "nombre": "parlante",
+                    "peso": 5.0,
+                    "volumen": 0.045
+                }
+            ]
+        },
+        {
+            "id": "S13",
+            "destino": "U10",
+            "inicio": "10:00",
+            "fin": "14:00",
+            "articulos_kwargs": {
+                "parlante": [
+                    5.0,
+                    0.045
+                ],
+                "silla_escritorio": [
+                    11.0,
+                    0.3
+                ],
+                "libros": [
+                    4.5,
+                    0.025
+                ]
+            }
+        },
+        {
+            "id": "S14",
+            "destino": "U11",
+            "inicio": "11:00",
+            "fin": "14:00",
+            "articulos": [
+                {
+                    "id": "S14-A1",
+                    "nombre": "silla_escritorio",
+                    "peso": 11.0,
+                    "volumen": 0.3
+                },
+                {
+                    "id": "S14-A2",
+                    "nombre": "libros",
+                    "peso": 4.5,
+                    "volumen": 0.025
+                },
+                {
+                    "id": "S14-A3",
+                    "nombre": "monitor",
+                    "peso": 6.0,
+                    "volumen": 0.06
+                },
+                {
+                    "id": "S14-A4",
+                    "nombre": "impresora",
+                    "peso": 8.5,
+                    "volumen": 0.09
+                }
+            ]
+        },
+        {
+            "id": "S15",
+            "destino": "U12",
+            "inicio": "12:00",
+            "fin": "16:00",
+            "articulos_kwargs": {
+                "libros": [
+                    4.5,
+                    0.025
+                ],
+                "monitor": [
+                    6.0,
+                    0.06
+                ]
+            }
+        },
+        {
+            "id": "S16",
+            "destino": "U13",
+            "inicio": "13:00",
+            "fin": "16:00",
+            "articulos": [
+                {
+                    "id": "S16-A1",
+                    "nombre": "monitor",
+                    "peso": 6.0,
+                    "volumen": 0.06
+                },
+                {
+                    "id": "S16-A2",
+                    "nombre": "impresora",
+                    "peso": 8.5,
+                    "volumen": 0.09
+                },
+                {
+                    "id": "S16-A3",
+                    "nombre": "cafetera",
+                    "peso": 3.0,
+                    "volumen": 0.02
+                }
+            ]
+        },
+        {
+            "id": "S17",
+            "destino": "U14",
+            "inicio": "14:00",
+            "fin": "18:00",
+            "articulos_kwargs": {
+                "impresora": [
+                    8.5,
+                    0.09
+                ],
+                "cafetera": [
+                    3.0,
+                    0.02
+                ],
+                "herramientas": [
+                    12.0,
+                    0.05
+                ],
+                "ropa": [
+                    2.5,
+                    0.04
+                ]
+            }
+        },
+        {
+            "id": "S18",
+            "destino": "U15",
+            "inicio": "09:00",
+            "fin": "12:00",
+            "articulos": [
+                {
+                    "id": "S18-A1",
+                    "nombre": "cafetera",
+                    "peso": 3.0,
+                    "volumen": 0.02
+                },
+                {
+                    "id": "S18-A2",
+                    "nombre": "herramientas",
+                    "peso": 12.0,
+                    "volumen": 0.05
+                }
+            ]
+        },
+        {
+            "id": "S19",
+            "destino": "U16",
+            "inicio": "10:00",
+            "fin": "14:00",
+            "articulos_kwargs": {
+                "herramientas": [
+                    12.0,
+                    0.05
+                ],
+                "ropa": [
+                    2.5,
+                    0.04
+                ],
+                "zapatillas": [
+                    1.2,
+                    0.015
+                ]
+            }
+        },
+        {
+            "id": "S20",
+            "destino": "U17",
+            "inicio": "11:00",
+            "fin": "14:00",
+            "articulos": [
+                {
+                    "id": "S20-A1",
+                    "nombre": "ropa",
+                    "peso": 2.5,
+                    "volumen": 0.04
+                },
+                {
+                    "id": "S20-A2",
+                    "nombre": "zapatillas",
+                    "peso": 1.2,
+                    "volumen": 0.015
+                },
+                {
+                    "id": "S20-A3",
+                    "nombre": "mesa_plegable",
+                    "peso": 15.0,
+                    "volumen": 0.18
+                },
+                {
+                    "id": "S20-A4",
+                    "nombre": "bicicleta",
+                    "peso": 14.0,
+                    "volumen": 0.55
+                }
+            ]
+        },
+        {
+            "id": "S21",
+            "destino": "U18",
+            "inicio": "12:00",
+            "fin": "16:00",
+            "articulos_kwargs": {
+                "zapatillas": [
+                    1.2,
+                    0.015
+                ],
+                "mesa_plegable": [
+                    15.0,
+                    0.18
+                ]
+            }
+        },
+        {
+            "id": "S22",
+            "destino": "U19",
+            "inicio": "13:00",
+            "fin": "16:00",
+            "articulos": [
+                {
+                    "id": "S22-A1",
+                    "nombre": "mesa_plegable",
+                    "peso": 15.0,
+                    "volumen": 0.18
+                },
+                {
+                    "id": "S22-A2",
+                    "nombre": "bicicleta",
+                    "peso": 14.0,
+                    "volumen": 0.55
+                },
+                {
+                    "id": "S22-A3",
+                    "nombre": "notebook",
+                    "peso": 2.0,
+                    "volumen": 0.012
+                }
+            ]
+        },
+        {
+            "id": "S23",
+            "destino": "U20",
+            "inicio": "14:00",
+            "fin": "18:00",
+            "articulos_kwargs": {
+                "bicicleta": [
+                    14.0,
+                    0.55
+                ],
+                "notebook": [
+                    2.0,
+                    0.012
+                ],
+                "almohadas": [
+                    1.5,
+                    0.08
+                ],
+                "ventilador": [
+                    4.0,
+                    0.07
+                ]
+            }
+        },
+        {
+            "id": "S24",
+            "destino": "U1",
+            "inicio": "09:00",
+            "fin": "12:00",
+            "articulos": [
+                {
+                    "id": "S24-A1",
+                    "nombre": "notebook",
+                    "peso": 2.0,
+                    "volumen": 0.012
+                },
+                {
+                    "id": "S24-A2",
+                    "nombre": "almohadas",
+                    "peso": 1.5,
+                    "volumen": 0.08
+                }
+            ]
+        },
+        {
+            "id": "S25",
+            "destino": "U2",
+            "inicio": "10:00",
+            "fin": "14:00",
+            "articulos_kwargs": {
+                "almohadas": [
+                    1.5,
+                    0.08
+                ],
+                "ventilador": [
+                    4.0,
+                    0.07
+                ],
+                "vajilla": [
+                    9.0,
+                    0.035
+                ]
+            }
+        },
+        {
+            "id": "S26",
+            "destino": "U3",
+            "inicio": "11:00",
+            "fin": "14:00",
+            "articulos": [
+                {
+                    "id": "S26-A1",
+                    "nombre": "ventilador",
+                    "peso": 4.0,
+                    "volumen": 0.07
+                },
+                {
+                    "id": "S26-A2",
+                    "nombre": "vajilla",
+                    "peso": 9.0,
+                    "volumen": 0.035
+                },
+                {
+                    "id": "S26-A3",
+                    "nombre": "parlante",
+                    "peso": 5.0,
+                    "volumen": 0.045
+                },
+                {
+                    "id": "S26-A4",
+                    "nombre": "silla_escritorio",
+                    "peso": 11.0,
+                    "volumen": 0.3
+                }
+            ]
+        },
+        {
+            "id": "S27",
+            "destino": "U4",
+            "inicio": "12:00",
+            "fin": "16:00",
+            "articulos_kwargs": {
+                "vajilla": [
+                    9.0,
+                    0.035
+                ],
+                "parlante": [
+                    5.0,
+                    0.045
+                ]
+            }
+        },
+        {
+            "id": "S28",
+            "destino": "U5",
+            "inicio": "13:00",
+            "fin": "16:00",
+            "articulos": [
+                {
+                    "id": "S28-A1",
+                    "nombre": "parlante",
+                    "peso": 5.0,
+                    "volumen": 0.045
+                },
+                {
+                    "id": "S28-A2",
+                    "nombre": "silla_escritorio",
+                    "peso": 11.0,
+                    "volumen": 0.3
+                },
+                {
+                    "id": "S28-A3",
+                    "nombre": "libros",
+                    "peso": 4.5,
+                    "volumen": 0.025
+                }
+            ]
+        },
+        {
+            "id": "S29",
+            "destino": "U6",
+            "inicio": "14:00",
+            "fin": "18:00",
+            "articulos_kwargs": {
+                "silla_escritorio": [
+                    11.0,
+                    0.3
+                ],
+                "libros": [
+                    4.5,
+                    0.025
+                ],
+                "monitor": [
+                    6.0,
+                    0.06
+                ],
+                "impresora": [
+                    8.5,
+                    0.09
+                ]
+            }
+        },
+        {
+            "id": "S30",
+            "destino": "U7",
+            "inicio": "09:00",
+            "fin": "12:00",
+            "articulos": [
+                {
+                    "id": "S30-A1",
+                    "nombre": "libros",
+                    "peso": 4.5,
+                    "volumen": 0.025
+                },
+                {
+                    "id": "S30-A2",
+                    "nombre": "monitor",
+                    "peso": 6.0,
+                    "volumen": 0.06
+                }
+            ]
+        }
+    ],
+    "flota": [
+        {
+            "tipo": "Motocicleta",
+            "id": "M1",
+            "capacidad_peso": 20,
+            "capacidad_volumen": 0.2,
+            "velocidad_media": 40,
+            "costo_por_km": 150,
+            "costo_por_parada": 200,
+            "factor_ambiental": 0.27
+        },
+        {
+            "tipo": "Furgoneta",
+            "id": "F1",
+            "capacidad_peso": 800,
+            "capacidad_volumen": 8.0,
+            "velocidad_media": 30,
+            "costo_por_km": 250,
+            "costo_por_parada": 500,
+            "factor_ambiental": 0.27
+        },
+        {
+            "tipo": "Camion",
+            "id": "C1",
+            "capacidad_peso": 5000,
+            "capacidad_volumen": 30.0,
+            "velocidad_media": 25,
+            "costo_por_km": 600,
+            "costo_por_parada": 800,
+            "factor_ambiental": 0.27
+        },
+        {
+            "tipo": "Motocicleta",
+            "id": "M2",
+            "capacidad_peso": 31,
+            "capacidad_volumen": 0.26,
+            "velocidad_media": 37,
+            "costo_por_km": 150,
+            "costo_por_parada": 190,
+            "factor_ambiental": 0.17
+        },
+        {
+            "tipo": "Motocicleta",
+            "id": "M3",
+            "capacidad_peso": 34,
+            "capacidad_volumen": 0.29,
+            "velocidad_media": 38,
+            "costo_por_km": 160,
+            "costo_por_parada": 210,
+            "factor_ambiental": 0.18
+        },
+        {
+            "tipo": "Motocicleta",
+            "id": "M4",
+            "capacidad_peso": 37,
+            "capacidad_volumen": 0.32,
+            "velocidad_media": 39,
+            "costo_por_km": 170,
+            "costo_por_parada": 230,
+            "factor_ambiental": 0.19
+        },
+        {
+            "tipo": "Motocicleta",
+            "id": "M5",
+            "capacidad_peso": 40,
+            "capacidad_volumen": 0.35,
+            "velocidad_media": 40,
+            "costo_por_km": 180,
+            "costo_por_parada": 250,
+            "factor_ambiental": 0.2
+        },
+        {
+            "tipo": "Motocicleta",
+            "id": "M6",
+            "capacidad_peso": 43,
+            "capacidad_volumen": 0.38,
+            "velocidad_media": 41,
+            "costo_por_km": 190,
+            "costo_por_parada": 270,
+            "factor_ambiental": 0.21
+        },
+        {
+            "tipo": "Motocicleta",
+            "id": "M7",
+            "capacidad_peso": 46,
+            "capacidad_volumen": 0.41,
+            "velocidad_media": 42,
+            "costo_por_km": 200,
+            "costo_por_parada": 290,
+            "factor_ambiental": 0.22
+        },
+        {
+            "tipo": "Furgoneta",
+            "id": "F2",
+            "capacidad_peso": 850,
+            "capacidad_volumen": 7.0,
+            "velocidad_media": 30,
+            "costo_por_km": 250,
+            "costo_por_parada": 410,
+            "factor_ambiental": 0.24
+        },
+        {
+            "tipo": "Furgoneta",
+            "id": "F3",
+            "capacidad_peso": 950,
+            "capacidad_volumen": 8.0,
+            "velocidad_media": 31,
+            "costo_por_km": 265,
+            "costo_por_parada": 440,
+            "factor_ambiental": 0.25
+        },
+        {
+            "tipo": "Furgoneta",
+            "id": "F4",
+            "capacidad_peso": 1050,
+            "capacidad_volumen": 9.0,
+            "velocidad_media": 32,
+            "costo_por_km": 280,
+            "costo_por_parada": 470,
+            "factor_ambiental": 0.26
+        },
+        {
+            "tipo": "Furgoneta",
+            "id": "F5",
+            "capacidad_peso": 1150,
+            "capacidad_volumen": 10.0,
+            "velocidad_media": 33,
+            "costo_por_km": 295,
+            "costo_por_parada": 500,
+            "factor_ambiental": 0.27
+        },
+        {
+            "tipo": "Furgoneta",
+            "id": "F6",
+            "capacidad_peso": 1250,
+            "capacidad_volumen": 11.0,
+            "velocidad_media": 34,
+            "costo_por_km": 310,
+            "costo_por_parada": 530,
+            "factor_ambiental": 0.28
+        },
+        {
+            "tipo": "Furgoneta",
+            "id": "F7",
+            "capacidad_peso": 1350,
+            "capacidad_volumen": 12.0,
+            "velocidad_media": 35,
+            "costo_por_km": 325,
+            "costo_por_parada": 560,
+            "factor_ambiental": 0.29
+        },
+        {
+            "tipo": "Camion",
+            "id": "C2",
+            "capacidad_peso": 4500,
+            "capacidad_volumen": 26.0,
+            "velocidad_media": 24,
+            "costo_por_km": 560,
+            "costo_por_parada": 680,
+            "factor_ambiental": 0.34
+        },
+        {
+            "tipo": "Camion",
+            "id": "C3",
+            "capacidad_peso": 5000,
+            "capacidad_volumen": 29.0,
+            "velocidad_media": 25,
+            "costo_por_km": 590,
+            "costo_por_parada": 720,
+            "factor_ambiental": 0.36
+        },
+        {
+            "tipo": "Camion",
+            "id": "C4",
+            "capacidad_peso": 5500,
+            "capacidad_volumen": 32.0,
+            "velocidad_media": 26,
+            "costo_por_km": 620,
+            "costo_por_parada": 760,
+            "factor_ambiental": 0.38
+        },
+        {
+            "tipo": "Camion",
+            "id": "C5",
+            "capacidad_peso": 6000,
+            "capacidad_volumen": 35.0,
+            "velocidad_media": 27,
+            "costo_por_km": 650,
+            "costo_por_parada": 800,
+            "factor_ambiental": 0.4
+        },
+        {
+            "tipo": "Camion",
+            "id": "C6",
+            "capacidad_peso": 6500,
+            "capacidad_volumen": 38.0,
+            "velocidad_media": 28,
+            "costo_por_km": 680,
+            "costo_por_parada": 840,
+            "factor_ambiental": 0.42
+        }
+    ]
+}
