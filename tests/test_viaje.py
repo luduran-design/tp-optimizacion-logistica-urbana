@@ -615,3 +615,110 @@ class TestValidacionViaje:
     def test_id_none_lanza_error(self):
         with pytest.raises(DatosInvalidos, match="id"):
             self._armar(None)
+
+# ============================================================
+# Pila de ordenes anteriores (deshacer reordenar)
+# ============================================================
+
+def _orden(viaje):
+    return [p.solicitud.id for p in viaje.paradas]
+
+
+class TestPilaDeOrdenes:
+    def test_viaje_nuevo_no_tiene_nada_para_deshacer(self):
+        viaje, _ = _viaje_con_solicitudes(2)
+        assert not viaje.puede_deshacer()
+        with pytest.raises(TransicionIlegal):
+            viaje.deshacer_reordenar()
+
+    def test_deshacer_vuelve_al_orden_anterior(self):
+        viaje, [s1, s2] = _viaje_con_solicitudes(2)
+        viaje.reordenar([s2, s1])
+        assert viaje.puede_deshacer()
+        viaje.deshacer_reordenar()
+        assert _orden(viaje) == ["S1", "S2"]
+        assert not viaje.puede_deshacer()
+
+    def test_deshacer_recalcula_llegadas_y_distancia(self):
+        viaje, [s1, s2] = _viaje_con_solicitudes(2)
+        distancia = viaje.distancia_total()
+        llegadas = [p.llegada_prevista for p in viaje.paradas]
+        viaje.reordenar([s2, s1])
+        viaje.deshacer_reordenar()
+        assert viaje.distancia_total() == distancia
+        assert [p.llegada_prevista for p in viaje.paradas] == llegadas
+
+    def test_es_lifo_el_ultimo_en_entrar_sale_primero(self):
+        viaje, [s1, s2] = _viaje_con_solicitudes(2)
+        viaje.reordenar([s2, s1])      # apila [S1, S2]
+        viaje.reordenar([s1, s2])      # apila [S2, S1]
+        viaje.deshacer_reordenar()
+        assert _orden(viaje) == ["S2", "S1"]
+        viaje.deshacer_reordenar()
+        assert _orden(viaje) == ["S1", "S2"]
+
+    def test_reordenar_fallido_no_apila(self):
+        viaje, [s1, _] = _viaje_con_solicitudes(2)
+        with pytest.raises(DatosInvalidos):
+            viaje.reordenar([s1])
+        assert not viaje.puede_deshacer()
+
+    def test_agregar_o_quitar_vacia_la_pila(self):
+        viaje, [s1, s2] = _viaje_con_solicitudes(2)
+        viaje.reordenar([s2, s1])
+        viaje.quitar_solicitud(s1)
+        assert not viaje.puede_deshacer()
+
+    def test_no_se_deshace_despues_de_iniciar(self):
+        viaje, [s1, s2] = _viaje_con_solicitudes(2)
+        viaje.reordenar([s2, s1])
+        viaje.iniciar()
+        with pytest.raises(TransicionIlegal):
+            viaje.deshacer_reordenar()
+
+
+# ============================================================
+# Cola de paradas por visitar
+# ============================================================
+
+class TestColaDeParadas:
+    def test_planificado_la_cola_esta_vacia(self):
+        viaje, _ = _viaje_con_solicitudes(2)
+        assert viaje.paradas_por_visitar == []
+
+    def test_al_iniciar_se_encolan_en_el_orden_planificado(self):
+        viaje, [s1, s2] = _viaje_con_solicitudes(2)
+        viaje.reordenar([s2, s1])
+        viaje.iniciar()
+        assert [p.solicitud for p in viaje.paradas_por_visitar] == [s2, s1]
+        assert viaje.parada_actual().solicitud == s2
+
+    def test_cada_parada_resuelta_sale_por_adelante(self):
+        viaje, [s1, s2] = _viaje_con_solicitudes(2)
+        viaje.iniciar()
+        viaje.registrar_entrega(s1, "Juan", _hora(9))
+        assert [p.solicitud for p in viaje.paradas_por_visitar] == [s2]
+        incidente = Incidente("I1", TipoIncidente.AUSENTE, _hora(10), "nadie", s2)
+        viaje.registrar_fallo(s2, incidente)
+        assert viaje.paradas_por_visitar == []
+        assert viaje.parada_actual() is None
+
+    def test_entrega_fuera_de_orden_no_toca_la_cola(self):
+        viaje, [s1, s2] = _viaje_con_solicitudes(2)
+        viaje.iniciar()
+        with pytest.raises(TransicionIlegal):
+            viaje.registrar_entrega(s2, "Ana", _hora(9))
+        assert len(viaje.paradas_por_visitar) == 2
+
+    def test_entrega_con_receptor_vacio_no_toca_la_cola(self):
+        viaje, [s1, _] = _viaje_con_solicitudes(2)
+        viaje.iniciar()
+        with pytest.raises(DatosInvalidos):
+            viaje.registrar_entrega(s1, "", _hora(9))
+        assert len(viaje.paradas_por_visitar) == 2
+
+    def test_la_cola_devuelta_es_una_copia(self):
+        viaje, _ = _viaje_con_solicitudes(2)
+        viaje.iniciar()
+        viaje.paradas_por_visitar.clear()
+        assert len(viaje.paradas_por_visitar) == 2

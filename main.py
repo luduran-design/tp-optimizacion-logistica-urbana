@@ -270,6 +270,17 @@ def paso_4_se_arma_el_viaje(empresa: Empresa, furgoneta: Furgoneta, s1: Solicitu
     print("Distancia total:", round(viaje.distancia_total(), 2), "km",
           "| Es factible?", viaje.es_factible())
 
+    # PILA: el orden que habia quedo apilado. Deshacer lo desapila (el ultimo
+    # que entro es el primero que sale) y lo vuelve a aplicar.
+    viaje.deshacer_reordenar()
+    print("Deshacer -> vuelve el orden anterior:", ids([p.solicitud for p in viaje.paradas]))
+    try:
+        viaje.deshacer_reordenar()
+    except TransicionIlegal as e:
+        print("TransicionIlegal ->", e)
+    viaje.reordenar(orden_sugerido)
+    print("Se vuelve a aplicar MenorVentanaPrimero:", ids([p.solicitud for p in viaje.paradas]))
+
     # Itinerario calcula, Viaje opera.
     return viaje
 
@@ -289,6 +300,8 @@ def paso_5_se_ejecuta(empresa: Empresa, viaje: Viaje, furgoneta: Furgoneta,
 
     viaje.iniciar()
     print(f"Viaje {viaje.id} iniciado, estado:", viaje.estado.value)
+    # COLA: al iniciar, las paradas se encolan en el orden planificado.
+    print("Cola de paradas por visitar:", ids([p.solicitud for p in viaje.paradas_por_visitar]))
 
     # En curso ya no se planifica.
     try:
@@ -308,6 +321,7 @@ def paso_5_se_ejecuta(empresa: Empresa, viaje: Viaje, furgoneta: Furgoneta,
                           "Nadie atendio en el domicilio", s2)
     viaje.registrar_fallo(s2, incidente)
     print(f"Fallo en {s2.id}: incidente {incidente.id} ({incidente.tipo.value})")
+    print("Sale S2 por adelante. Cola:", ids([p.solicitud for p in viaje.paradas_por_visitar]))
     print("Comprobantes emitidos:", len(viaje.comprobantes),
           "| Incidentes:", len(viaje.incidentes))
 
@@ -322,6 +336,7 @@ def paso_5_se_ejecuta(empresa: Empresa, viaje: Viaje, furgoneta: Furgoneta,
     comprobante = viaje.comprobantes[0]
     print(f"Comprobante nro {comprobante.nro}: {comprobante.solicitud.id} "
           f"recibido por {comprobante.receptor} a las {comprobante.fecha_hora_real:%H:%M}")
+    print("Cola vacia?", viaje.paradas_por_visitar == [])
     print("Comprobantes emitidos:", len(viaje.comprobantes),
           "| Incidentes:", len(viaje.incidentes))
 
@@ -379,4 +394,3 @@ def main() -> None:
 # No cambiar a partir de aqui
 if __name__ == "__main__":
     main()
-
