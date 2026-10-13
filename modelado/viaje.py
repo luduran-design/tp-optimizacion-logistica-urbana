@@ -1,4 +1,5 @@
 from collections import deque
+from copy import copy, deepcopy
 
 from modelado.enums import EstadoViaje
 from modelado.excepciones import TransicionIlegal, DatosInvalidos
@@ -42,7 +43,8 @@ class Viaje:
 
     @property
     def itinerario(self) -> "Itinerario":
-        return self._itinerario
+        # Copia independiente: consultar el itinerario no permite cambiar el viaje.
+        return deepcopy(self._itinerario)
 
     @property
     def comprobantes(self):
@@ -54,8 +56,8 @@ class Viaje:
 
     @property
     def paradas_por_visitar(self):
-        """Copia de la cola: la primera es la proxima a resolver."""
-        return list(self._paradas_por_visitar)
+        """Copias de las paradas de la cola: la primera es la proxima a resolver."""
+        return [copy(p) for p in self._paradas_por_visitar]
 
     def puede_deshacer(self) -> bool:
         return len(self._ordenes_anteriores) > 0
@@ -63,7 +65,8 @@ class Viaje:
     # --- Delegacion al itinerario ---
     @property
     def paradas(self):
-        return self._itinerario.paradas
+        # Copiar cada Parada evita modificar su resultado u orden desde afuera.
+        return [copy(p) for p in self._itinerario.paradas]
 
     def distancia_total(self) -> float:
         return self._itinerario.distancia_total
@@ -113,10 +116,11 @@ class Viaje:
         self._exigir_planificado("deshacer un reordenamiento de")
         if not self._ordenes_anteriores:
             raise TransicionIlegal("No hay reordenamientos para deshacer")
-        anterior = self._ordenes_anteriores.pop()
-        # Ese orden ya fue valido con estas mismas solicitudes, asi que se
-        # vuelve a calcular y aplicar sin sorpresas.
+        anterior = self._ordenes_anteriores[-1]
+        # La matriz puede haber cambiado: primero validamos y aplicamos.
+        # Si falla, el historial queda intacto para poder reintentar.
         self._itinerario.reordenar(anterior)
+        self._ordenes_anteriores.pop()
 
     # --- Maquina de estados (regla 10) ---
 
@@ -160,6 +164,11 @@ class Viaje:
         return all(not p.esta_pendiente() for p in self._itinerario.paradas)
 
     def parada_actual(self):
+        """Devuelve una copia del estado actual de la proxima parada."""
+        actual = self._parada_actual_interna()
+        return copy(actual) if actual is not None else None
+
+    def _parada_actual_interna(self):
         # En curso, la parada actual es la que esta al frente de la cola.
         if self._estado == EstadoViaje.EN_CURSO:
             return self._paradas_por_visitar[0] if self._paradas_por_visitar else None
@@ -175,7 +184,7 @@ class Viaje:
         no es la actual (fuera de orden, ajena al viaje, o ya cerrada), lanza
         TransicionIlegal explicando cual es la proxima.
         """
-        actual = self.parada_actual()
+        actual = self._parada_actual_interna()
         if actual is None:
             raise TransicionIlegal("El viaje no tiene paradas pendientes")
         if actual.solicitud != solicitud:
