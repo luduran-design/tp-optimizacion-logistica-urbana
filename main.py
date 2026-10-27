@@ -38,7 +38,7 @@ def crear_solicitud_desde_datos(empresa: Empresa, datos: dict,
     inicio = horario(datos["inicio"])
     fin = horario(datos["fin"])
     if "articulos_kwargs" in datos:
-        # JSON convierte los pares en listas; la fabrica exige tuplas.
+        # # JSON convierte los pares en listas; crear_solicitud espera tuplas.
         articulos = {}
         for nombre, medidas in datos["articulos_kwargs"].items():
             articulos[nombre] = tuple(medidas)
@@ -52,7 +52,7 @@ def crear_solicitud_desde_datos(empresa: Empresa, datos: dict,
 
 
 def ids(solicitudes: list) -> list:
-    """Lista de ids, para imprimir ordenes de forma compacta."""
+    """Devuelve solo los ids, para mostrar el orden de las solicitudes sin imprimir cada objeto."""
     return [s.id for s in solicitudes]
 
 
@@ -114,7 +114,7 @@ def paso_0_escenario(datos: dict) -> tuple:
 
 def paso_1_nace_el_pedido(empresa: Empresa, palermo: Ubicacion,
                           belgrano: Ubicacion, datos: dict) -> tuple:
-    """Crea S1 a mano y S2 con la fabrica de Empresa."""
+    """Crea S1 a mano y S2 con empresa.crear_solicitud."""
     print()
     print("===== PASO 1: Nace el pedido =====")
 
@@ -139,7 +139,7 @@ def paso_1_nace_el_pedido(empresa: Empresa, palermo: Ubicacion,
     except DatosInvalidos as e:
         print("DatosInvalidos ->", e)
 
-    # S2 con la fabrica de Empresa. **articulos recibe cada articulo como
+    # S2 con empresa.crear_solicitud. **articulos recibe cada articulo como
     # nombre=(peso, volumen); Empresa arma los Articulo y la Ventana por nosotros.
     s2 = crear_solicitud_desde_datos(empresa, solicitudes["S2"], belgrano)
     print(f"{s2.id} creada con kwargs: articulos {[a.nombre for a in s2.articulos]}, "
@@ -209,7 +209,7 @@ def paso_3_politica(empresa: Empresa) -> list:
     pendientes = [s for s in empresa.solicitudes_pendientes() if s.id in ("S1", "S2")]
     print("Pendientes:", ids(pendientes))
 
-    # Strategy: Empresa no sabe que politica recibe, solo le pide sugerir_orden.
+    # Empresa recibe cualquier politica y solo le pide sugerir_orden.
     vecino = empresa.consultar_politica(VecinoMasCercano(), pendientes)
     urgencia = empresa.consultar_politica(MenorVentanaPrimero(), pendientes)
     print("VecinoMasCercano   sugiere:", ids(vecino), "(Palermo esta mas cerca de D1)")
@@ -225,11 +225,11 @@ def paso_3_politica(empresa: Empresa) -> list:
 def paso_4_se_arma_el_viaje(empresa: Empresa, furgoneta: Furgoneta, s1: Solicitud,
                             s2: Solicitud, palermo: Ubicacion,
                             orden_sugerido: list, datos: dict) -> Viaje:
-    """Crea el viaje, agrega paradas y muestra la revalidacion atomica."""
+    """Crea el viaje, agrega paradas y muestra la revalidacion atomica: si algo falla, el viaje queda como estaba"""
     print()
     print("===== PASO 4: Se arma el viaje =====")
 
-    # Factory: el viaje se crea desde Empresa, que le pasa deposito y matriz.
+    # El viaje se crea desde Empresa, que le pasa deposito y matriz.
     viaje = empresa.crear_viaje("V1", FECHA, furgoneta, hora(8, 30))
     print(f"Viaje {viaje.id} creado, estado:", viaje.estado.value)
 
