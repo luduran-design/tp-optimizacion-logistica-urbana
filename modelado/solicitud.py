@@ -63,7 +63,18 @@ class Solicitud:
     # Solicitud suma el peso/volumen de sus articulos (regla 2) y delega los horarios
     # en su Ventana. Articulo es solo una unidad de carga.
     def peso_total(self):
-        return sum(a.peso for a in self._articulos)
+        return self._sumar_pesos(0)
+    
+    def _sumar_pesos(self, posicion):
+        # Caso base: ya no quedan artículos por sumar.
+        if posicion == len(self._articulos):
+            return 0
+
+        # Peso del artículo actual + peso de los restantes.
+        return (
+            self._articulos[posicion].peso
+            + self._sumar_pesos(posicion + 1)
+        )
 
     def volumen_total(self):
         return sum(a.volumen for a in self._articulos)

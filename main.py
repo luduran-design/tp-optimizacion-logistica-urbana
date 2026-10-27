@@ -124,6 +124,8 @@ def paso_1_nace_el_pedido(empresa: Empresa, palermo: Ubicacion,
 
     print(f"{s1.id}: destino {s1.destino.nombre}, "
           f"ventana {s1.ventana.inicio:%H:%M}-{s1.ventana.fin:%H:%M}")
+    # peso_total() suma recursivamente los pesos de los artículos de S1.
+    # Caso base: al llegar al final de la lista, devuelve 0.
     print("Peso total:", s1.peso_total(), "kg")
     print("Volumen total:", round(s1.volumen_total(), 2), "m3")
     print("Esta asignada?", s1.esta_asignada())
