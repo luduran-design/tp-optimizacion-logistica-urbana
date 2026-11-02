@@ -103,7 +103,7 @@ class Empresa:
     # --- Factory ---
 
     def crear_viaje(self, id_viaje, fecha, transporte, hora_salida):
-        # Factory: nadie construye un Viaje sin pasar por aca.
+        # nadie construye un Viaje sin pasar por aca.
         if id_viaje in self._viajes:
             raise DatosInvalidos(f"Ya existe un viaje con id '{id_viaje}'")
 
