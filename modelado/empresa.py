@@ -100,8 +100,6 @@ class Empresa:
             raise DatosInvalidos(f"No existe un viaje con id '{id}'")
         return self._viajes[id]
 
-    # --- Factory ---
-
     def crear_viaje(self, id_viaje, fecha, transporte, hora_salida):
         # nadie construye un Viaje sin pasar por aca.
         if id_viaje in self._viajes:
